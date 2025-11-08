@@ -1,0 +1,365 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Résultats - Modèle 2{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('main.scenarios_list') }}">Modèles</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('scenario2.form') }}">Modèle 2</a>
+    <span class="separator">›</span>
+    <span class="current">Résultats</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="results-page">
+    <h2 class="page-title">Résultats - Analyse consolidée</h2>
+
+    <!-- Bandeau de contexte -->
+    <div class="context-banner">
+        <div class="context-item">
+            <strong>Période:</strong> {{ filters.date_debut|format_date }} au {{ filters.date_fin|format_date }}
+        </div>
+        {% if filters.montant_min or filters.montant_max %}
+        <div class="context-item">
+            <strong>Montants:</strong>
+            {{ filters.montant_min|format_currency if filters.montant_min else '0 FCFA' }} -
+            {{ filters.montant_max|format_currency if filters.montant_max else 'Illimité' }}
+        </div>
+        {% endif %}
+        <div class="context-item">
+            <strong>Sources:</strong>
+            {% if filters.include_acte and filters.include_rub %}ACTE, RUB
+            {% elif filters.include_acte %}ACTE uniquement
+            {% elif filters.include_rub %}RUB uniquement
+            {% else %}Aucune source{% endif %}
+        </div>
+        <div class="context-item">
+            <strong>Résultats:</strong> {{ pagination.total_count|format_number }}
+        </div>
+    </div>
+
+    <!-- Métriques globales -->
+    <div class="metrics-cards">
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.total_dossiers|format_number }}</div>
+            <div class="metric-label">Dossiers (PEC)</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.total_beneficiaires|format_number }}</div>
+            <div class="metric-label">Bénéficiaires</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.total_lignes|format_number }}</div>
+            <div class="metric-label">Lignes traitées</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.montant_total|format_currency }}</div>
+            <div class="metric-label">Montant total</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.montant_moyen_dossier|format_currency }}</div>
+            <div class="metric-label">Montant moyen/dossier</div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+        <div class="actions-left">
+            <a href="{{ url_for('scenario2.form') }}" class="btn btn-secondary">
+                ← Affiner les filtres
+            </a>
+        </div>
+        <div class="actions-right">
+            <span class="export-label">Exporter:</span>
+            <a href="{{ url_for('exports.export_scenario2', format='csv') }}" class="btn btn-sm btn-success">
+                📄 CSV
+            </a>
+            <a href="{{ url_for('exports.export_scenario2', format='xlsx') }}" class="btn btn-sm btn-success">
+                📊 XLSX
+            </a>
+            <a href="{{ url_for('exports.export_scenario2', format='pdf') }}" class="btn btn-sm btn-success">
+                📕 PDF
+            </a>
+            <a href="{{ url_for('exports.export_scenario2', format='word') }}" class="btn btn-sm btn-success">
+                📘 WORD
+            </a>
+        </div>
+    </div>
+
+    <!-- Requête SQL (si demandée) -->
+    {% if sql_query %}
+    <div class="sql-display">
+        <h3 class="section-title">🧑‍💻 Requête SQL générée</h3>
+        <pre class="sql-code">{{ sql_query }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- Tableau des résultats -->
+    {% if results %}
+    <div class="table-container">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Structure exécutante</th>
+                    <th>Numéro PEC</th>
+                    <th>Date exécution</th>
+                    <th>Libellé Acte/Rubrique</th>
+                    <th>Source</th>
+                    {% if filters.show_beneficiaire %}
+                    <th>Num. bénéficiaire</th>
+                    <th>Nom & Prénom</th>
+                    {% endif %}
+                    {% if filters.show_telephone %}
+                    <th>Téléphone</th>
+                    {% endif %}
+                    {% if filters.show_sexe %}
+                    <th>Sexe</th>
+                    {% endif %}
+                    {% if filters.show_date_naissance %}
+                    <th>Date naissance</th>
+                    {% endif %}
+                    {% if filters.show_type_trans %}
+                    <th>Type transaction</th>
+                    {% endif %}
+                    {% if filters.show_nb_lignes %}
+                    <th class="text-right">Nb/Co</th>
+                    {% endif %}
+                    <th class="text-right">Montant groupé</th>
+                    <th class="text-right">Total cumulé PEC</th>
+                    <th class="text-center">Facture</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    <td>{{ row.nom_structure or 'N/A' }}</td>
+                    <td class="font-weight-bold">{{ row.num_pec or 'N/A' }}</td>
+                    <td>{{ row.premiere_date_execution|format_date }}</td>
+                    <td>{{ row.libelle_acte or 'N/A' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'primary' if row.source_ligne == 'ACTE' else 'info' }}">
+                            {{ row.source_ligne or 'N/A' }}
+                        </span>
+                    </td>
+                    {% if filters.show_beneficiaire %}
+                    <td>{{ row.num_bnf or 'N/A' }}</td>
+                    <td>{{ row.nom_prenom or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.show_telephone %}
+                    <td>{{ row.telephone or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.show_sexe %}
+                    <td>{{ row.sexe or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.show_date_naissance %}
+                    <td>{{ row.date_naissance|format_date if row.date_naissance else 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.show_type_trans %}
+                    <td>{{ row.libelle_type_trans or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.show_nb_lignes %}
+                    <td class="text-right">{{ row.nb_lignes|format_number }}</td>
+                    {% endif %}
+                    <td class="text-right font-weight-bold">{{ row.montant_execute_total|format_currency }}</td>
+                    <td class="text-right text-primary font-weight-bold">
+                        {{ row.montant_group_numpec|format_currency }}
+                    </td>
+                    <td class="text-center">
+                        {% if row.num_pec %}
+                        <a href="{{ url_for('scenario2.facture', num_pec=row.num_pec) }}"
+                           class="btn-facture"
+                           title="Voir la facture détaillée"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            📄 FACTURE
+                        </a>
+                        {% else %}
+                        <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% include 'partials/pagination.html' %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>Aucun résultat trouvé pour ces critères de recherche</p>
+        <a href="{{ url_for('scenario2.form') }}" class="btn btn-primary">Modifier les filtres</a>
+    </div>
+    {% endif %}
+
+    <!-- Sauvegarde de l'analyse -->
+    <div class="section">
+        <h3 class="section-title">💾 Enregistrer cette analyse</h3>
+        <form method="POST" action="{{ url_for('scenario2.save_analysis') }}" class="save-analysis-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nom_utilisateur">Nom de l'utilisateur</label>
+                    <input type="text" id="nom_utilisateur" name="nom_utilisateur"
+                           class="form-control" value="Admin" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="intitule">Intitulé de l'analyse</label>
+                    <input type="text" id="intitule" name="intitule" class="form-control"
+                           placeholder="Ex: Analyse consolidée dossiers janvier 2025" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="motif">Motif / Commentaire</label>
+                <textarea id="motif" name="motif" class="form-control" rows="3"
+                          placeholder="Décrivez l'objectif de cette analyse..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                💾 Enregistrer l'analyse
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Styles spécifiques pour le scénario 2 */
+
+/* Conteneur de tableau avec défilement horizontal */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+}
+
+/* Table avec largeur minimale pour forcer le défilement si nécessaire */
+.table-container table {
+    min-width: 1600px;
+    margin-bottom: 0;
+}
+
+/* Fixer les en-têtes lors du défilement */
+.table-container thead th {
+    position: sticky;
+    top: 0;
+    background-color: #28a745;
+    color: white;
+    z-index: 10;
+    white-space: nowrap;
+    padding: 12px 8px;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #1e7e34;
+}
+
+/* Cellules du tableau */
+.table-container td {
+    white-space: nowrap;
+    padding: 10px 8px;
+    font-size: 0.9rem;
+}
+
+/* Colonnes importantes en gras */
+.table-container td.font-weight-bold {
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 85%;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.text-primary {
+    color: #007bff !important;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Barre de défilement personnalisée */
+.table-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Bouton FACTURE */
+.btn-facture {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-facture:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-facture:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.text-muted {
+    color: #6c757d;
+    font-style: italic;
+}
+</style>
+{% endblock %}

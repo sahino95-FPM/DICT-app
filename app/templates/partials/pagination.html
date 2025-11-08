@@ -1,0 +1,28 @@
+{% if pagination and pagination.total_pages > 1 %}
+<div class="pagination">
+    <div class="pagination-info">
+        Page {{ pagination.page }} sur {{ pagination.total_pages }}
+        ({{ pagination.total_count }} résultat{{ 's' if pagination.total_count > 1 else '' }})
+    </div>
+
+    <div class="pagination-controls">
+        {% if pagination.page > 1 %}
+            <a href="?page=1" class="btn btn-sm btn-secondary">« Première</a>
+            <a href="?page={{ pagination.page - 1 }}" class="btn btn-sm btn-secondary">‹ Précédente</a>
+        {% endif %}
+
+        {% for p in range(max(1, pagination.page - 2), min(pagination.total_pages + 1, pagination.page + 3)) %}
+            {% if p == pagination.page %}
+                <span class="btn btn-sm btn-primary current-page">{{ p }}</span>
+            {% else %}
+                <a href="?page={{ p }}" class="btn btn-sm btn-secondary">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.page < pagination.total_pages %}
+            <a href="?page={{ pagination.page + 1 }}" class="btn btn-sm btn-secondary">Suivante ›</a>
+            <a href="?page={{ pagination.total_pages }}" class="btn btn-sm btn-secondary">Dernière »</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

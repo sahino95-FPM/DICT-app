@@ -1,0 +1,12 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Erreur serveur - 500{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h1 class="error-code">500</h1>
+    <h2 class="error-title">Erreur interne du serveur</h2>
+    <p class="error-message">Une erreur inattendue s'est produite. Nos équipes ont été notifiées.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Retour au dashboard</a>
+</div>
+{% endblock %}

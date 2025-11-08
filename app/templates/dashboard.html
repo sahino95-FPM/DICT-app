@@ -1,0 +1,114 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard - FPMsigm | Inspections{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h2 class="page-title">Tableau de bord</h2>
+
+    <!-- Cartes statistiques -->
+    <div class="cards-grid">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">📊 Analyses récentes</h3>
+            </div>
+            <div class="card-body">
+                <p class="card-value">{{ stats.recent_analyses|length }}</p>
+                <p class="card-label">analyses effectuées</p>
+            </div>
+        </div>
+
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title">🔍 Modèles</h3>
+            </div>
+            <div class="card-body">
+                <p class="card-value">4</p>
+                <p class="card-label">modèles disponibles</p>
+            </div>
+        </div>
+
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">📥 Exports</h3>
+            </div>
+            <div class="card-body">
+                <p class="card-value">CSV, XLSX, PDF</p>
+                <p class="card-label">formats supportés</p>
+            </div>
+        </div>
+
+        <div class="card card-warning">
+            <div class="card-header">
+                <h3 class="card-title">⚡ Status</h3>
+            </div>
+            <div class="card-body">
+                <p class="card-value">✓ Actif</p>
+                <p class="card-label">système opérationnel</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analyses récentes -->
+    <div class="section">
+        <h3 class="section-title">Analyses récentes</h3>
+
+        {% if stats.recent_analyses %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Utilisateur</th>
+                        <th>Intitulé</th>
+                        <th>Modèle</th>
+                        <th>Métriques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for analysis in stats.recent_analyses %}
+                    <tr>
+                        <td>{{ analysis.date_analyse|format_date('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ analysis.nom_utilisateur }}</td>
+                        <td>{{ analysis.intitule }}</td>
+                        <td><span class="badge">S{{ analysis.scenario_id }}</span></td>
+                        <td>
+                            {% if analysis.metriques %}
+                                {{ analysis.metriques.total_actes|format_number }} actes -
+                                {{ analysis.metriques.montant_total|format_currency }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Aucune analyse récente</p>
+            <a href="{{ url_for('main.scenarios_list') }}" class="btn btn-primary">Commencer une analyse</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Raccourcis -->
+    <div class="section">
+        <h3 class="section-title">Raccourcis</h3>
+        <div class="cards-grid">
+            <a href="{{ url_for('scenario1.form') }}" class="card card-link">
+                <div class="card-body">
+                    <h4>🔍 Modèle 1</h4>
+                    <p>Recherche des montants exécutés par structure, dossier et période</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('main.scenarios_list') }}" class="card card-link">
+                <div class="card-body">
+                    <h4>📋 Tous les modèles</h4>
+                    <p>Voir la liste complète des modèles d'analyse disponibles</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

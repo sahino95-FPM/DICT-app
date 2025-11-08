@@ -1,0 +1,12 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Page non trouvée - 404{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h1 class="error-code">404</h1>
+    <h2 class="error-title">Page non trouvée</h2>
+    <p class="error-message">La page que vous recherchez n'existe pas ou a été déplacée.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Retour au dashboard</a>
+</div>
+{% endblock %}

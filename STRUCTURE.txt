@@ -1,0 +1,205 @@
+DICT-app/
+│
+├── app/                                    # Application Flask
+│   ├── __init__.py                        # Factory Flask + configuration
+│   ├── config.py                          # Classes de configuration
+│   │
+│   ├── models/                            # Couche d'accès aux données (DAO)
+│   │   ├── base.py                        # Classe de base pour requêtes paramétrées
+│   │   ├── acte.py                        # Modèle pour les actes médicaux
+│   │   └── analysis_log.py                # Modèle pour l'historique des analyses
+│   │
+│   ├── services/                          # Logique métier
+│   │   ├── analytics_service.py           # Service d'analyse de données
+│   │   └── export_service.py              # Service d'export (CSV, XLSX, PDF)
+│   │
+│   ├── controllers/                       # Routes Flask (Blueprints)
+│   │   ├── main_controller.py             # Dashboard + liste scénarios
+│   │   ├── scenario1_controller.py        # Scénario 1: Montants exécutés
+│   │   └── exports_controller.py          # Endpoints d'export
+│   │
+│   ├── templates/                         # Templates Jinja2
+│   │   ├── layouts/
+│   │   │   └── base.html                  # Template de base
+│   │   │
+│   │   ├── partials/                      # Composants réutilisables
+│   │   │   ├── header.html                # En-tête avec logo FPM
+│   │   │   ├── sidebar.html               # Navigation latérale
+│   │   │   ├── footer.html                # Pied de page
+│   │   │   ├── messages.html              # Messages flash
+│   │   │   └── pagination.html            # Contrôles de pagination
+│   │   │
+│   │   ├── dashboard.html                 # Page d'accueil
+│   │   │
+│   │   ├── scenarios/
+│   │   │   └── index.html                 # Liste des scénarios
+│   │   │
+│   │   ├── scenario1/                     # Templates Scénario 1
+│   │   │   ├── form.html                  # Formulaire de recherche
+│   │   │   └── results.html               # Affichage des résultats
+│   │   │
+│   │   └── errors/                        # Pages d'erreur
+│   │       ├── 404.html                   # Page non trouvée
+│   │       └── 500.html                   # Erreur serveur
+│   │
+│   └── static/                            # Ressources statiques
+│       ├── css/
+│       │   └── style.css                  # Feuille de style complète (palette FPM)
+│       ├── img/
+│       │   ├── logo_fpm.png               # Logo FPM (à fournir)
+│       │   └── README.txt                 # Instructions pour le logo
+│       └── js/                            # JavaScript (vide pour l'instant)
+│
+├── run.py                                 # Point d'entrée de l'application
+├── requirements.txt                       # Dépendances Python
+├── init_db.sql                            # Script d'initialisation BD
+├── verify_installation.py                 # Script de vérification
+│
+├── .env.example                           # Variables d'environnement (exemple)
+├── .env                                   # Variables d'environnement (local, ignoré)
+├── .gitignore                             # Fichiers ignorés par Git
+│
+├── README.md                              # Documentation principale
+├── QUICKSTART.md                          # Guide de démarrage rapide
+├── CONTRIBUTING.md                        # Guide de contribution
+├── CHANGELOG.md                           # Historique des versions
+├── PROJECT_SUMMARY.md                     # Résumé du projet
+└── STRUCTURE.txt                          # Ce fichier
+
+
+FICHIERS CRÉÉS (33 au total):
+
+Python (11):
+  - app/__init__.py
+  - app/config.py
+  - app/models/base.py
+  - app/models/acte.py
+  - app/models/analysis_log.py
+  - app/services/analytics_service.py
+  - app/services/export_service.py
+  - app/controllers/main_controller.py
+  - app/controllers/scenario1_controller.py
+  - app/controllers/exports_controller.py
+  - run.py
+  - verify_installation.py
+
+HTML (13):
+  - app/templates/layouts/base.html
+  - app/templates/partials/header.html
+  - app/templates/partials/sidebar.html
+  - app/templates/partials/footer.html
+  - app/templates/partials/messages.html
+  - app/templates/partials/pagination.html
+  - app/templates/dashboard.html
+  - app/templates/scenarios/index.html
+  - app/templates/scenario1/form.html
+  - app/templates/scenario1/results.html
+  - app/templates/errors/404.html
+  - app/templates/errors/500.html
+
+CSS (1):
+  - app/static/css/style.css
+
+SQL (1):
+  - init_db.sql
+
+Markdown (5):
+  - README.md
+  - QUICKSTART.md
+  - CONTRIBUTING.md
+  - CHANGELOG.md
+  - PROJECT_SUMMARY.md
+
+Config (3):
+  - requirements.txt
+  - .env.example
+  - .gitignore
+  - STRUCTURE.txt
+
+Texte (1):
+  - app/static/img/README.txt
+
+
+ARCHITECTURE:
+
+┌─────────────────────────────────────┐
+│          TEMPLATES (Views)          │
+│  Jinja2 - HTML - CSS                │
+└─────────────────────────────────────┘
+                 ↕
+┌─────────────────────────────────────┐
+│      CONTROLLERS (Routes)           │
+│  Flask Blueprints                   │
+│  - main_controller                  │
+│  - scenario1_controller             │
+│  - exports_controller               │
+└─────────────────────────────────────┘
+                 ↕
+┌─────────────────────────────────────┐
+│         SERVICES (Logique)          │
+│  - analytics_service                │
+│  - export_service                   │
+└─────────────────────────────────────┘
+                 ↕
+┌─────────────────────────────────────┐
+│      MODELS (Accès données)         │
+│  - base (BaseModel)                 │
+│  - acte (ActeModel)                 │
+│  - analysis_log (AnalysisLogModel)  │
+└─────────────────────────────────────┘
+                 ↕
+┌─────────────────────────────────────┐
+│         BASE DE DONNÉES             │
+│  MySQL / PostgreSQL                 │
+│  - acte_trans                       │
+│  - structure_sante                  │
+│  - pec                              │
+│  - analysis_log                     │
+└─────────────────────────────────────┘
+
+
+FLUX DE DONNÉES:
+
+1. Utilisateur → Template (formulaire)
+2. Template → Controller (POST)
+3. Controller → Service (logique métier)
+4. Service → Model (requête BD)
+5. Model → Base de données (SQL paramétré)
+6. Base de données → Model (résultats)
+7. Model → Service (traitement)
+8. Service → Controller (données)
+9. Controller → Template (affichage)
+10. Template → Utilisateur (HTML)
+
+
+SÉCURITÉ:
+
+✓ Requêtes SQL paramétrées (JAMAIS de concaténation)
+✓ CSRF tokens sur tous les formulaires
+✓ Validation côté serveur
+✓ Variables d'environnement (.env)
+✓ HTTPOnly cookies
+✓ Pagination des résultats
+✓ Logs de traçabilité
+
+
+EXTENSIBILITÉ:
+
+Pour ajouter un scénario X:
+
+1. models/scenarioX_model.py        → Accès données
+2. services/scenarioX_service.py    → Logique métier
+3. controllers/scenarioX_controller.py → Routes
+4. templates/scenarioX/*.html       → Vues
+5. Enregistrer dans app/__init__.py
+6. Ajouter au registre (main_controller.py)
+
+
+DÉMARRAGE:
+
+1. pip install -r requirements.txt
+2. cp .env.example .env (puis éditer)
+3. mysql < init_db.sql
+4. python verify_installation.py
+5. python run.py
+6. http://localhost:5000

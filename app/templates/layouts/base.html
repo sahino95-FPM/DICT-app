@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FPMsigm - Département d'Inspection et de Contrôle Technique">
+    <title>{% block title %}FPMsigm | Inspections{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    {% include 'partials/header.html' %}
+
+    <!-- Container principal -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        {% include 'partials/sidebar.html' %}
+
+        <!-- Zone de contenu -->
+        <main class="content-area">
+            <!-- Breadcrumb -->
+            {% block breadcrumb %}{% endblock %}
+
+            <!-- Messages flash -->
+            {% include 'partials/messages.html' %}
+
+            <!-- Contenu de la page -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    {% include 'partials/footer.html' %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Flask Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Base de données
+SQLAlchemy==2.0.35
+PyMySQL==1.1.0
+mariadb>=1.1.0  # Connecteur MariaDB pour Scénario 2
+cryptography>=41.0.0  # Requis pour MySQL 8+ avec caching_sha2_password
+# psycopg2-binary==2.9.9  # Décommenter pour PostgreSQL
+
+# Sécurité & Forms
+Flask-WTF==1.2.1
+python-dotenv==1.0.0
+
+# Export de données
+openpyxl==3.1.2
+reportlab==4.0.7
+python-docx==1.1.0  # Export Word (DOCX) pour Scénario 2
+
+# Logs et monitoring
+python-dateutil==2.8.2
+
+# Développement (optionnel)
+# flask-debugtoolbar==0.14.1
+# pytest==7.4.3
+# pytest-flask==1.3.0

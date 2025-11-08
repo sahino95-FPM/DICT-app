@@ -1,0 +1,349 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Facture - {{ num_pec }}{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('main.scenarios_list') }}">Modèles</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('scenario2.form') }}">Modèle 2</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('scenario2.results') }}">Résultats</a>
+    <span class="separator">›</span>
+    <span class="current">Facture</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="facture-page">
+    <div class="facture-header">
+        <h2 class="page-title">Facture Détaillée</h2>
+        <div class="facture-info">
+            <div class="info-row">
+                <strong>Numéro PEC:</strong> <span class="num-pec">{{ num_pec }}</span>
+            </div>
+            <div class="info-row">
+                <strong>Structure:</strong> {{ nom_structure }}
+            </div>
+            <div class="info-row">
+                <strong>Numéro Bénéficiaire:</strong> <span class="num-bnf">{{ num_bnf }}</span>
+            </div>
+            <div class="info-row">
+                <strong>Nom & Prénom:</strong> <span class="nom-prenom">{{ nom_prenom }}</span>
+            </div>
+            <div class="info-row montant-total">
+                <strong>Montant Total Cumulé:</strong>
+                <span class="total-amount">{{ montant_total|format_currency }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-buttons">
+        <a href="{{ url_for('scenario2.results') }}" class="btn btn-secondary">
+            ← Retour aux résultats
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            🖨️ Imprimer
+        </button>
+    </div>
+
+    <!-- Tableau des détails -->
+    <div class="table-container">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Libellé Acte/Rubrique</th>
+                    <th>Nb/Co</th>
+                    <th>Montant Unitaire</th>
+                    <th>Montant Groupé</th>
+                    <th>Première Date</th>
+                    <th>Dernière Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in details %}
+                <tr>
+                    <td>
+                        <span class="badge badge-{{ 'primary' if detail.source_ligne == 'ACTE' else 'info' }}">
+                            {{ detail.source_ligne }}
+                        </span>
+                    </td>
+                    <td>{{ detail.libelle_acte or 'N/A' }}</td>
+                    <td class="text-center">{{ detail.nb }}</td>
+                    <td class="text-right">
+                        {% if detail.nb and detail.nb > 0 %}
+                        {{ (detail.montant / detail.nb)|round(2)|format_currency }}
+                        {% else %}
+                        {{ detail.montant|format_currency }}
+                        {% endif %}
+                    </td>
+                    <td class="text-right font-weight-bold">{{ detail.montant|format_currency }}</td>
+                    <td class="text-center">{{ detail.premiere_date_execution|format_date }}</td>
+                    <td class="text-center">{{ detail.derniere_date_execution|format_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" class="text-right"><strong>TOTAL CUMULÉ:</strong></td>
+                    <td class="text-right"><strong>{{ montant_total|format_currency }}</strong></td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Résumé -->
+    <div class="facture-summary">
+        <div class="summary-card">
+            <h3>Résumé</h3>
+            <div class="summary-item">
+                <span>Nombre total de lignes:</span>
+                <strong>{{ details|length }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Nb/Co (Cumulés):</span>
+                <strong>{{ details|sum(attribute='nb') }}</strong>
+            </div>
+            <div class="summary-item total">
+                <span>Montant Total:</span>
+                <strong class="amount-large">{{ montant_total|format_currency }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.facture-page {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.facture-header {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.page-title {
+    color: #28a745;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.facture-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-row {
+    display: flex;
+    gap: 10px;
+    font-size: 1rem;
+}
+
+.info-row strong {
+    color: #495057;
+    min-width: 180px;
+}
+
+.num-pec {
+    color: #007bff;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.num-bnf {
+    color: #17a2b8;
+    font-weight: 600;
+}
+
+.nom-prenom {
+    color: #28a745;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.montant-total {
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 2px solid #e9ecef;
+}
+
+.total-amount {
+    color: #28a745;
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #218838;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.table thead th {
+    background-color: #28a745;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #1e7e34;
+}
+
+.table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table tfoot .total-row {
+    background-color: #f8f9fa;
+    font-size: 1.1rem;
+}
+
+.table tfoot td {
+    padding: 15px 12px;
+    border-top: 2px solid #28a745;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.font-weight-bold {
+    font-weight: bold;
+}
+
+.facture-summary {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.summary-card h3 {
+    color: #28a745;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item.total {
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid #28a745;
+    font-size: 1.1rem;
+}
+
+.amount-large {
+    color: #28a745;
+    font-size: 1.5rem;
+}
+
+/* Impression */
+@media print {
+    .action-buttons {
+        display: none;
+    }
+
+    .breadcrumb {
+        display: none;
+    }
+
+    .facture-page {
+        padding: 0;
+    }
+
+    .table-container {
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Modèles - FPMsigm | Inspections{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <span class="separator">›</span>
+    <span class="current">Modèles</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="scenarios-page">
+    <h2 class="page-title">Modèles d'analyse</h2>
+    <p class="page-description">
+        Sélectionnez un modèle d'analyse pour effectuer des recherches et générer des exports.
+    </p>
+
+    <div class="scenarios-grid">
+        {% for scenario in scenarios %}
+        <div class="scenario-card {% if not scenario.active %}disabled{% endif %}">
+            <div class="scenario-icon">{{ scenario.icon if scenario.icon in ['search', 'chart', 'table', 'stats'] else '📊' }}</div>
+            <div class="scenario-content">
+                <h3 class="scenario-title">
+                    Modèle {{ scenario.id }}
+                    {% if not scenario.active %}<span class="badge badge-secondary">À venir</span>{% endif %}
+                </h3>
+                <h4 class="scenario-subtitle">{{ scenario.titre }}</h4>
+                <p class="scenario-description">{{ scenario.description }}</p>
+
+                {% if scenario.active and scenario.route %}
+                <a href="{{ url_for(scenario.route) }}" class="btn btn-primary">
+                    Ouvrir le modèle
+                </a>
+                {% else %}
+                <button class="btn btn-secondary" disabled>Non disponible</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Placeholder pour modèles futurs -->
+    <div class="section">
+        <h3 class="section-title">Modèles à venir</h3>
+        <p class="text-muted">
+            D'autres modèles d'analyse seront ajoutés progressivement pour répondre aux besoins
+            du Département d'Inspection et de Contrôle Technique.
+        </p>
+        <ul class="features-list">
+            <li>Analyse des anomalies de facturation</li>
+            <li>Suivi des structures suspectes</li>
+            <li>Détection des parcours de soins atypiques</li>
+            <li>Analyse comparative inter-structures</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

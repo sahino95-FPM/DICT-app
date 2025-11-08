@@ -1,0 +1,164 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Résultats - Modèle 1{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('main.scenarios_list') }}">Modèles</a>
+    <span class="separator">›</span>
+    <a href="{{ url_for('scenario1.form') }}">Modèle 1</a>
+    <span class="separator">›</span>
+    <span class="current">Résultats</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="results-page">
+    <h2 class="page-title">Résultats de la recherche</h2>
+
+    <!-- Bandeau de contexte -->
+    <div class="context-banner">
+        <div class="context-item">
+            <strong>Période:</strong> {{ filters.date_debut|format_date }} au {{ filters.date_fin|format_date }}
+        </div>
+        {% if filters.montant_min or filters.montant_max %}
+        <div class="context-item">
+            <strong>Montants:</strong>
+            {{ filters.montant_min|format_currency if filters.montant_min else '0 FCFA' }} -
+            {{ filters.montant_max|format_currency if filters.montant_max else 'Illimité' }}
+        </div>
+        {% endif %}
+        <div class="context-item">
+            <strong>Résultats:</strong> {{ pagination.total_count|format_number }}
+        </div>
+    </div>
+
+    <!-- Métriques globales -->
+    <div class="metrics-cards">
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.total_actes|format_number }}</div>
+            <div class="metric-label">Total actes</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.montant_total|format_currency }}</div>
+            <div class="metric-label">Montant total</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ metrics.montant_moyen|format_currency }}</div>
+            <div class="metric-label">Montant moyen</div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+        <div class="actions-left">
+            <a href="{{ url_for('scenario1.form') }}" class="btn btn-secondary">
+                ← Affiner les filtres
+            </a>
+        </div>
+        <div class="actions-right">
+            <span class="export-label">Exporter:</span>
+            <a href="{{ url_for('exports.export_scenario1', format='csv') }}" class="btn btn-sm btn-success">
+                📄 CSV
+            </a>
+            <a href="{{ url_for('exports.export_scenario1', format='xlsx') }}" class="btn btn-sm btn-success">
+                📊 XLSX
+            </a>
+            <a href="{{ url_for('exports.export_scenario1', format='pdf') }}" class="btn btn-sm btn-success">
+                📕 PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Requête SQL (si demandée) -->
+    {% if sql_query %}
+    <div class="sql-display">
+        <h3 class="section-title">🧑‍💻 Requête SQL générée</h3>
+        <pre class="sql-code">{{ sql_query }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- Tableau des résultats -->
+    {% if results %}
+    <div class="table-container">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    {% if filters.group_by_structure %}
+                    <th>Structure exécutante</th>
+                    {% endif %}
+                    {% if filters.group_by_pec %}
+                    <th>Numéro PEC</th>
+                    {% endif %}
+                    {% if filters.group_by_date %}
+                    <th>Date d'exécution</th>
+                    {% endif %}
+                    <th class="text-right">Nombre d'actes</th>
+                    <th class="text-right">Montant total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    {% if filters.group_by_structure %}
+                    <td>{{ row.nom_structure or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.group_by_pec %}
+                    <td>{{ row.num_pec or 'N/A' }}</td>
+                    {% endif %}
+                    {% if filters.group_by_date %}
+                    <td>{{ row.date_execution|format_date }}</td>
+                    {% endif %}
+                    <td class="text-right">{{ row.nb_actes|format_number }}</td>
+                    <td class="text-right font-weight-bold">{{ row.montant_total|format_currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% include 'partials/pagination.html' %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>Aucun résultat trouvé pour ces critères de recherche</p>
+        <a href="{{ url_for('scenario1.form') }}" class="btn btn-primary">Modifier les filtres</a>
+    </div>
+    {% endif %}
+
+    <!-- Sauvegarde de l'analyse -->
+    <div class="section">
+        <h3 class="section-title">💾 Enregistrer cette analyse</h3>
+        <form method="POST" action="{{ url_for('scenario1.save_analysis') }}" class="save-analysis-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nom_utilisateur">Nom de l'utilisateur</label>
+                    <input type="text" id="nom_utilisateur" name="nom_utilisateur"
+                           class="form-control" value="Admin" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="intitule">Intitulé de l'analyse</label>
+                    <input type="text" id="intitule" name="intitule" class="form-control"
+                           placeholder="Ex: Analyse mensuelle structures zone A" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="motif">Motif / Commentaire</label>
+                <textarea id="motif" name="motif" class="form-control" rows="3"
+                          placeholder="Décrivez l'objectif de cette analyse..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                💾 Enregistrer l'analyse
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

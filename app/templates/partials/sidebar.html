@@ -1,0 +1,51 @@
+<aside class="sidebar">
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{{ url_for('main.scenarios_list') }}" class="nav-link {% if 'scenarios' in request.endpoint %}active{% endif %}">
+                    <span class="icon">🔍</span>
+                    <span>Modèles</span>
+                </a>
+                <ul class="nav-sublist">
+                    <li>
+                        <a href="{{ url_for('scenario1.form') }}" class="nav-sublink {% if 'scenario1' in request.endpoint %}active{% endif %}">
+                            Modèle 1: Montants exécutés
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('scenario2.form') }}" class="nav-sublink {% if 'scenario2' in request.endpoint %}active{% endif %}">
+                            Modèle 2: Analyse consolidée
+                        </a>
+                    </li>
+                    <li class="nav-sublink disabled">
+                        Modèle 3 (à venir)
+                    </li>
+                    <li class="nav-sublink disabled">
+                        Modèle 4 (à venir)
+                    </li>
+                </ul>
+            </li>
+
+            <li class="nav-item">
+                <a href="#" class="nav-link disabled">
+                    <span class="icon">📈</span>
+                    <span>Rapports</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="#" class="nav-link disabled">
+                    <span class="icon">⚙️</span>
+                    <span>Paramètres</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>
