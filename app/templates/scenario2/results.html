@@ -130,9 +130,15 @@
                     <td>{{ row.premiere_date_execution|format_date }}</td>
                     <td>{{ row.libelle_acte or 'N/A' }}</td>
                     <td>
-                        <span class="badge badge-{{ 'primary' if row.source_ligne == 'ACTE' else 'info' }}">
-                            {{ row.source_ligne or 'N/A' }}
-                        </span>
+                        {% if row.source_ligne == 'ACTE' %}
+                            <span class="badge badge-primary">{{ row.source_ligne }}</span>
+                        {% elif row.source_ligne == 'RUB' %}
+                            <span class="badge badge-info">{{ row.source_ligne }}</span>
+                        {% elif row.source_ligne == 'PHARMACIE' %}
+                            <span class="badge badge-success">{{ row.source_ligne }}</span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ row.source_ligne or 'N/A' }}</span>
+                        {% endif %}
                     </td>
                     {% if filters.show_beneficiaire %}
                     <td>{{ row.num_bnf or 'N/A' }}</td>
@@ -293,6 +299,16 @@
 
 .badge-info {
     background-color: #17a2b8;
+    color: white;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
     color: white;
 }
 

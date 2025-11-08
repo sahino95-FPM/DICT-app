@@ -63,6 +63,7 @@ class Scenario2Model:
         montant_max=None,
         include_acte=True,
         include_rub=True,
+        include_pharmacie=True,
         num_bnf=None,
         nom_prenom=None,
         id_structures=None,
@@ -154,6 +155,35 @@ class Scenario2Model:
                 acte_query += " AND laa.montant_acte <= :montant_max"
             union_parts.append(acte_query)
 
+        if include_pharmacie:
+            pharmacie_query = """
+                SELECT
+                    at.num_pec,
+                    at.id_structure_executante              AS id_structure,
+                    s.nom_structure                         AS nom_structure,
+                    at.num_trans,
+                    lpa.id_acte_trans,
+                    lpa.id_pharmacie                        AS ref_id,
+                    ph.libelle                              AS libelle_acte,
+                    lpa.date_execution                      AS date_execution,
+                    lpa.montant                             AS montant,
+                    lpa.quantite                            AS nb_orig,
+                    'PHARMACIE'                             AS source_ligne
+                FROM acte_trans at
+                JOIN list_pharmacie_acte_trans lpa
+                    ON lpa.id_acte_trans = at.id_acte_trans
+                JOIN structure s
+                    ON s.id_structure = at.id_structure_executante
+                LEFT JOIN pharmacie ph
+                    ON ph.id = lpa.id_pharmacie
+                WHERE lpa.date_execution BETWEEN :date_debut AND :date_fin
+            """
+            if montant_min is not None:
+                pharmacie_query += " AND lpa.montant >= :montant_min"
+            if montant_max is not None:
+                pharmacie_query += " AND lpa.montant <= :montant_max"
+            union_parts.append(pharmacie_query)
+
         if not union_parts:
             return []
 
@@ -184,7 +214,7 @@ class Scenario2Model:
         where_clause = " WHERE " + " AND ".join(where_conditions) if where_conditions else ""
 
         # Construction CTE pour total cumulé par PEC SANS filtres de dates/montants
-        # IMPORTANT: On inclut TOUJOURS ACTE + RUB pour le total, indépendamment des filtres
+        # IMPORTANT: On inclut TOUJOURS ACTE + RUB + PHARMACIE pour le total, indépendamment des filtres
         # Mais on filtre par num_pec si fourni pour éviter de calculer tous les dossiers
         where_total_pec = ""
         if num_pec:
@@ -205,6 +235,15 @@ class Scenario2Model:
                 laa.montant_acte * laa.quantite AS montant_total
             FROM acte_trans at
             JOIN list_acte_acte_trans laa ON laa.id_acte_trans = at.id_acte_trans
+            {where_total_pec}
+
+            UNION ALL
+
+            SELECT
+                at.num_pec,
+                lpa.montant * lpa.quantite AS montant_total
+            FROM acte_trans at
+            JOIN list_pharmacie_acte_trans lpa ON lpa.id_acte_trans = at.id_acte_trans
             {where_total_pec}
         """
 
@@ -287,6 +326,7 @@ class Scenario2Model:
         montant_max=None,
         include_acte=True,
         include_rub=True,
+        include_pharmacie=True,
         num_bnf=None,
         nom_prenom=None,
         id_structures=None,
@@ -369,6 +409,35 @@ class Scenario2Model:
             if montant_max is not None:
                 acte_query += " AND laa.montant_acte <= :montant_max"
             union_parts.append(acte_query)
+
+        if include_pharmacie:
+            pharmacie_query = """
+                SELECT
+                    at.num_pec,
+                    at.id_structure_executante              AS id_structure,
+                    s.nom_structure                         AS nom_structure,
+                    at.num_trans,
+                    lpa.id_acte_trans,
+                    lpa.id_pharmacie                        AS ref_id,
+                    ph.libelle                              AS libelle_acte,
+                    lpa.date_execution                      AS date_execution,
+                    lpa.montant                             AS montant,
+                    lpa.quantite                            AS nb_orig,
+                    'PHARMACIE'                             AS source_ligne
+                FROM acte_trans at
+                JOIN list_pharmacie_acte_trans lpa
+                    ON lpa.id_acte_trans = at.id_acte_trans
+                JOIN structure s
+                    ON s.id_structure = at.id_structure_executante
+                LEFT JOIN pharmacie ph
+                    ON ph.id = lpa.id_pharmacie
+                WHERE lpa.date_execution BETWEEN :date_debut AND :date_fin
+            """
+            if montant_min is not None:
+                pharmacie_query += " AND lpa.montant >= :montant_min"
+            if montant_max is not None:
+                pharmacie_query += " AND lpa.montant <= :montant_max"
+            union_parts.append(pharmacie_query)
 
         if not union_parts:
             return 0
@@ -511,6 +580,29 @@ class Scenario2Model:
             ON a2.id_acte = lrh.id_acte
           LEFT JOIN rubrique_hospitalisations rh
             ON rh.id = lrh.id_rub_hospit
+
+          UNION ALL
+
+          /* (C) PHARMACIE */
+          SELECT
+              at.num_pec,
+              at.id_structure_executante                  AS id_structure,
+              s.nom_structure                             AS nom_structure,
+              at.num_trans,
+              lpa.id_acte_trans,
+              lpa.id_pharmacie                            AS ref_id,
+              ph.libelle                                  AS libelle_acte,
+              lpa.date_execution                          AS date_execution,
+              lpa.montant                                 AS montant,
+              lpa.quantite                                AS nb_orig,
+              'PHARMACIE'                                 AS source_ligne
+          FROM acte_trans at
+          JOIN list_pharmacie_acte_trans lpa
+            ON lpa.id_acte_trans = at.id_acte_trans
+          JOIN structure s
+            ON s.id_structure = at.id_structure_executante
+          LEFT JOIN pharmacie ph
+            ON ph.id = lpa.id_pharmacie
         ),
         beneficiaire_info AS (
           /* Récupérer les infos du bénéficiaire */

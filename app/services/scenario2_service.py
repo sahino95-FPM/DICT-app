@@ -51,6 +51,7 @@ class Scenario2Service:
             montant_max=montant_max,
             include_acte=include_acte,
             include_rub=include_rub,
+            include_pharmacie=True,  # Toujours inclure la pharmacie
             num_bnf=num_bnf,
             nom_prenom=nom_prenom,
             id_structures=id_structures,
@@ -69,6 +70,7 @@ class Scenario2Service:
             montant_max=montant_max,
             include_acte=include_acte,
             include_rub=include_rub,
+            include_pharmacie=True,  # Toujours inclure la pharmacie
             num_bnf=num_bnf,
             nom_prenom=nom_prenom,
             id_structures=id_structures,
