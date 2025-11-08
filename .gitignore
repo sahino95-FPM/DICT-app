@@ -48,6 +48,14 @@ Thumbs.db
 
 # Uploads et exports
 uploads/
+
+# Empêcher Git de suivre le fichier .env
+.env
+
+# (Optionnel) Cache aussi les fichiers de logs et le dossier venv
+*.log
+venv/
+__pycache__/
 exports/
 temp/
 

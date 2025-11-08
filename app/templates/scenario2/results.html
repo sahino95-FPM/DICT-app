@@ -21,21 +21,10 @@
     <!-- Bandeau de contexte -->
     <div class="context-banner">
         <div class="context-item">
-            <strong>Période:</strong> {{ filters.date_debut|format_date }} au {{ filters.date_fin|format_date }}
+            <strong>Numéro PEC:</strong> <span class="num-pec-highlight">{{ filters.num_pec }}</span>
         </div>
-        {% if filters.montant_min or filters.montant_max %}
         <div class="context-item">
-            <strong>Montants:</strong>
-            {{ filters.montant_min|format_currency if filters.montant_min else '0 FCFA' }} -
-            {{ filters.montant_max|format_currency if filters.montant_max else 'Illimité' }}
-        </div>
-        {% endif %}
-        <div class="context-item">
-            <strong>Sources:</strong>
-            {% if filters.include_acte and filters.include_rub %}ACTE, RUB
-            {% elif filters.include_acte %}ACTE uniquement
-            {% elif filters.include_rub %}RUB uniquement
-            {% else %}Aucune source{% endif %}
+            <strong>Sources:</strong> ACTE, RUB
         </div>
         <div class="context-item">
             <strong>Résultats:</strong> {{ pagination.total_count|format_number }}
@@ -232,6 +221,16 @@
 
 <style>
 /* Styles spécifiques pour le scénario 2 */
+
+/* Mise en évidence du numéro PEC */
+.num-pec-highlight {
+    color: #007bff;
+    font-weight: 700;
+    font-size: 1.15rem;
+    padding: 2px 8px;
+    background: #e7f3ff;
+    border-radius: 4px;
+}
 
 /* Conteneur de tableau avec défilement horizontal */
 .table-container {

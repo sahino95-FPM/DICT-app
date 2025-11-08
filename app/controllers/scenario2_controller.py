@@ -184,20 +184,30 @@ def facture(num_pec):
 
 def _extract_filters_from_request():
     """Extrait les filtres du formulaire"""
+    # Valeurs par défaut pour le formulaire simplifié (uniquement num_pec)
+    # On définit une large période par défaut pour capturer tous les actes/rubriques
+    default_date_debut = (datetime.now() - timedelta(days=3650)).strftime('%Y-%m-%d')  # 10 ans
+    default_date_fin = datetime.now().strftime('%Y-%m-%d')
+
     # Structures sélectionnées (peut être une liste)
     id_structures = request.form.getlist('id_structures')
 
     return {
-        'date_debut': request.form.get('date_debut'),
-        'date_fin': request.form.get('date_fin'),
+        # Dates: par défaut sur 10 ans pour tout capturer
+        'date_debut': request.form.get('date_debut', default_date_debut),
+        'date_fin': request.form.get('date_fin', default_date_fin),
+        # Montants: pas de filtre par défaut
         'montant_min': _parse_float(request.form.get('montant_min')),
         'montant_max': _parse_float(request.form.get('montant_max')),
-        'include_acte': request.form.get('include_acte') == 'on',
-        'include_rub': request.form.get('include_rub') == 'on',
+        # Sources: toujours inclure ACTE et RUB pour le total complet
+        'include_acte': request.form.get('include_acte', 'on') == 'on',
+        'include_rub': request.form.get('include_rub', 'on') == 'on',
+        # Filtres de recherche
         'num_bnf': request.form.get('num_bnf', '').strip(),
         'nom_prenom': request.form.get('nom_prenom', '').strip(),
         'num_pec': request.form.get('num_pec', '').strip(),
         'id_structures': id_structures,
+        # Options d'affichage
         'sort_by': request.form.get('sort_by', 'num_pec'),
         'sort_order': request.form.get('sort_order', 'ASC'),
         'show_sql': request.form.get('show_sql') == 'on',
@@ -232,9 +242,8 @@ def _validate_filters(filters):
             if date_debut > date_fin:
                 errors.append("La date de début doit être antérieure à la date de fin")
 
-            # Limite de 3 ans
-            if (date_fin - date_debut).days > 1095:
-                errors.append("La période ne peut pas excéder 3 ans")
+            # Pas de limite de période pour le formulaire simplifié
+            # (nous utilisons une large période par défaut pour capturer tous les actes)
 
         except ValueError:
             errors.append("Format de date invalide (attendu: YYYY-MM-DD)")
@@ -250,6 +259,10 @@ def _validate_filters(filters):
     # Au moins une source
     if not filters['include_acte'] and not filters['include_rub']:
         errors.append("Vous devez sélectionner au moins une source (ACTE ou RUB)")
+
+    # Validation du numéro PEC (obligatoire pour le formulaire simplifié)
+    if not filters.get('num_pec'):
+        errors.append("Le numéro de dossier (PEC) est obligatoire")
 
     # Validation limite
     if filters['limit'] > 50000:

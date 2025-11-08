@@ -185,12 +185,18 @@ class Scenario2Model:
 
         # Construction CTE pour total cumulé par PEC SANS filtres de dates/montants
         # IMPORTANT: On inclut TOUJOURS ACTE + RUB pour le total, indépendamment des filtres
-        lignes_total_cte = """
+        # Mais on filtre par num_pec si fourni pour éviter de calculer tous les dossiers
+        where_total_pec = ""
+        if num_pec:
+            where_total_pec = f"WHERE at.num_pec LIKE :num_pec"
+
+        lignes_total_cte = f"""
             SELECT
                 at.num_pec,
                 lrh.montant * lrh.qte AS montant_total
             FROM acte_trans at
             JOIN list_rub_hosp_acte_trans lrh ON lrh.id_acte_trans = at.id_acte_trans
+            {where_total_pec}
 
             UNION ALL
 
@@ -199,6 +205,7 @@ class Scenario2Model:
                 laa.montant_acte * laa.quantite AS montant_total
             FROM acte_trans at
             JOIN list_acte_acte_trans laa ON laa.id_acte_trans = at.id_acte_trans
+            {where_total_pec}
         """
 
         # Requête principale avec groupement correct

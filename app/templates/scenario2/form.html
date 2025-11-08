@@ -14,246 +14,207 @@
 
 {% block content %}
 <div class="scenario-form-page">
-    <h2 class="page-title">Modèle 2: Analyse consolidée par dossier et structure</h2>
+    <h2 class="page-title">Modèle 2: Analyse consolidée par dossier</h2>
     <p class="page-description">
-        Obtenez une vue consolidée des montants exécutés regroupés par dossier (num_pec) et structure exécutante,
-        avec informations bénéficiaire, type de transaction et origine des données (ACTE/RUB).
+        Recherchez un dossier par son numéro PEC pour voir le détail consolidé des montants exécutés.
     </p>
 
     <form method="POST" action="{{ url_for('scenario2.results') }}" class="form-container">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <!-- Période de soins -->
+        <!-- Recherche par numéro de dossier -->
         <div class="form-section">
-            <h3 class="form-section-title">📅 Période de soins</h3>
-            <p class="form-help">Délimite la plage temporelle des actes à inclure</p>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="date_debut" class="required">Date de début</label>
-                    <input type="date" id="date_debut" name="date_debut" class="form-control"
-                           value="{{ defaults.date_debut }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="date_fin" class="required">Date de fin</label>
-                    <input type="date" id="date_fin" name="date_fin" class="form-control"
-                           value="{{ defaults.date_fin }}" required>
-                </div>
-            </div>
-        </div>
-
-        <!-- Plage de montants -->
-        <div class="form-section">
-            <h3 class="form-section-title">💰 Plage de montants</h3>
-            <p class="form-help">Filtre sur le montant des lignes élémentaires (FCFA)</p>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="montant_min">Montant minimum</label>
-                    <input type="number" id="montant_min" name="montant_min" class="form-control"
-                           value="{{ defaults.montant_min }}" min="0" step="100">
-                </div>
-
-                <div class="form-group">
-                    <label for="montant_max">Montant maximum</label>
-                    <input type="number" id="montant_max" name="montant_max" class="form-control"
-                           value="{{ defaults.montant_max }}" min="0" step="100">
-                </div>
-            </div>
-        </div>
-
-        <!-- Source des données -->
-        <div class="form-section">
-            <h3 class="form-section-title">📦 Source des données</h3>
-            <p class="form-help">Sélectionnez au moins une source de données</p>
-
-            <div class="form-checkboxes">
-                <div class="form-checkbox">
-                    <input type="checkbox" id="include_acte" name="include_acte"
-                           {% if defaults.include_acte %}checked{% endif %}>
-                    <label for="include_acte">ACTE (list_acte_acte_trans)</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="include_rub" name="include_rub"
-                           {% if defaults.include_rub %}checked{% endif %}>
-                    <label for="include_rub">RUB (list_rub_hosp_acte_trans)</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filtres bénéficiaire -->
-        <div class="form-section">
-            <h3 class="form-section-title">👤 Filtres bénéficiaire</h3>
-            <p class="form-help">Recherche par informations bénéficiaire (optionnel)</p>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="num_bnf">Numéro bénéficiaire</label>
-                    <input type="text" id="num_bnf" name="num_bnf" class="form-control"
-                           value="{{ defaults.num_bnf }}" placeholder="Ex: 90741">
-                </div>
-
-                <div class="form-group">
-                    <label for="nom_prenom">Nom & Prénom</label>
-                    <input type="text" id="nom_prenom" name="nom_prenom" class="form-control"
-                           value="{{ defaults.nom_prenom }}" placeholder="Ex: SAHIN">
-                </div>
-            </div>
+            <h3 class="form-section-title">📋 Numéro de dossier (PEC)</h3>
+            <p class="form-help">Saisissez le numéro de dossier PEC à consulter</p>
 
             <div class="form-group">
-                <label for="num_pec">Numéro de dossier (PEC)</label>
-                <input type="text" id="num_pec" name="num_pec" class="form-control"
-                       value="{{ defaults.num_pec }}" placeholder="Ex: 2025/001234">
-            </div>
-        </div>
-
-        <!-- Structures -->
-        <div class="form-section">
-            <h3 class="form-section-title">🏥 Structures exécutantes</h3>
-            <p class="form-help">Sélectionnez une ou plusieurs structures (optionnel)</p>
-
-            <div class="form-group">
-                <label for="id_structures">Structures</label>
-                <select id="id_structures" name="id_structures" class="form-control" multiple size="6">
-                    <option value="">-- Toutes les structures --</option>
-                    {% for structure in structures %}
-                    <option value="{{ structure.id_structure }}"
-                            {% if structure.id_structure|string in defaults.id_structures %}selected{% endif %}>
-                        {{ structure.nom_structure }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <span class="form-help-inline">Maintenez Ctrl (Windows) ou Cmd (Mac) pour sélectionner plusieurs structures</span>
-            </div>
-        </div>
-
-        <!-- Colonnes d'affichage -->
-        <div class="form-section">
-            <h3 class="form-section-title">📊 Colonnes d'affichage</h3>
-            <p class="form-help">Choisissez les colonnes à afficher dans les résultats</p>
-
-            <div class="form-checkboxes">
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_beneficiaire" name="show_beneficiaire"
-                           {% if defaults.show_beneficiaire %}checked{% endif %}>
-                    <label for="show_beneficiaire">Informations bénéficiaire</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_telephone" name="show_telephone"
-                           {% if defaults.show_telephone %}checked{% endif %}>
-                    <label for="show_telephone">Téléphone</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_sexe" name="show_sexe"
-                           {% if defaults.show_sexe %}checked{% endif %}>
-                    <label for="show_sexe">Sexe</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_date_naissance" name="show_date_naissance"
-                           {% if defaults.show_date_naissance %}checked{% endif %}>
-                    <label for="show_date_naissance">Date de naissance</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_type_trans" name="show_type_trans"
-                           {% if defaults.show_type_trans %}checked{% endif %}>
-                    <label for="show_type_trans">Type de transaction</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_nb_lignes" name="show_nb_lignes"
-                           {% if defaults.show_nb_lignes %}checked{% endif %}>
-                    <label for="show_nb_lignes">Nombre de lignes</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tri des résultats -->
-        <div class="form-section">
-            <h3 class="form-section-title">↕️ Tri des résultats</h3>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="sort_by">Trier par</label>
-                    <select id="sort_by" name="sort_by" class="form-control">
-                        <option value="num_pec" {% if defaults.sort_by == 'num_pec' %}selected{% endif %}>
-                            Numéro PEC
-                        </option>
-                        <option value="nom_structure" {% if defaults.sort_by == 'nom_structure' %}selected{% endif %}>
-                            Nom structure
-                        </option>
-                        <option value="date_execution" {% if defaults.sort_by == 'date_execution' %}selected{% endif %}>
-                            Date exécution
-                        </option>
-                        <option value="montant_total" {% if defaults.sort_by == 'montant_total' %}selected{% endif %}>
-                            Montant total
-                        </option>
-                        <option value="nb_lignes" {% if defaults.sort_by == 'nb_lignes' %}selected{% endif %}>
-                            Nombre de lignes
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="sort_order">Ordre</label>
-                    <select id="sort_order" name="sort_order" class="form-control">
-                        <option value="ASC" {% if defaults.sort_order == 'ASC' %}selected{% endif %}>
-                            Croissant (A → Z)
-                        </option>
-                        <option value="DESC" {% if defaults.sort_order == 'DESC' %}selected{% endif %}>
-                            Décroissant (Z → A)
-                        </option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Options avancées -->
-        <div class="form-section">
-            <h3 class="form-section-title">⚙️ Options avancées</h3>
-
-            <div class="form-checkboxes">
-                <div class="form-checkbox">
-                    <input type="checkbox" id="mask_phone" name="mask_phone"
-                           {% if defaults.mask_phone %}checked{% endif %}>
-                    <label for="mask_phone">🔒 Masquer les numéros de téléphone (XXXXX1234)</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_details" name="show_details"
-                           {% if defaults.show_details %}checked{% endif %}>
-                    <label for="show_details">🧮 Afficher le détail des lignes</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_sql" name="show_sql"
-                           {% if defaults.show_sql %}checked{% endif %}>
-                    <label for="show_sql">🧑‍💻 Afficher la requête SQL générée</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="limit">⏱️ Limiter le nombre de résultats</label>
-                <input type="number" id="limit" name="limit" class="form-control"
-                       value="{{ defaults.limit }}" min="50" max="50000" step="50">
-                <span class="form-help-inline">Entre 50 et 50 000 résultats</span>
+                <label for="num_pec" class="required">Numéro PEC</label>
+                <input type="text" id="num_pec" name="num_pec" class="form-control form-control-lg"
+                       value="{{ defaults.num_pec }}"
+                       placeholder="Ex: 25M001940/0098Q ou 2025/001234"
+                       required
+                       autofocus>
+                <span class="form-help-inline">Saisissez le numéro de dossier complet</span>
             </div>
         </div>
 
         <!-- Boutons d'action -->
         <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-lg">
-                🔍 Exécuter la recherche
+                🔍 Rechercher le dossier
             </button>
             <button type="reset" class="btn btn-secondary">
-                🔄 Réinitialiser
+                🔄 Effacer
             </button>
         </div>
     </form>
+
+    <!-- Informations -->
+    <div class="info-box">
+        <h4>ℹ️ À propos de cette recherche</h4>
+        <p>Cette recherche affiche tous les actes et rubriques d'hospitalisation associés au dossier PEC recherché, quelle que soit la date ou le montant.</p>
+        <p><strong>Le "Total cumulé PEC"</strong> représente le montant total de tous les actes et rubriques du dossier, sans aucun filtre.</p>
+    </div>
 </div>
+
+<style>
+.scenario-form-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.page-title {
+    color: #28a745;
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.page-description {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.form-container {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-section-title {
+    color: #28a745;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.form-help {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 1rem;
+}
+
+.form-group label.required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control-lg {
+    padding: 15px 20px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-help-inline {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #e9ecef;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-lg {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+}
+
+.btn-primary {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.info-box {
+    background: #e7f5ff;
+    border-left: 4px solid #17a2b8;
+    padding: 20px;
+    border-radius: 6px;
+}
+
+.info-box h4 {
+    color: #17a2b8;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.info-box p {
+    margin-bottom: 10px;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.info-box p:last-child {
+    margin-bottom: 0;
+}
+</style>
 {% endblock %}
