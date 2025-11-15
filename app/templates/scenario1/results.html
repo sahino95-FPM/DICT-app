@@ -38,8 +38,8 @@
     <!-- Métriques globales -->
     <div class="metrics-cards">
         <div class="metric-card">
-            <div class="metric-value">{{ metrics.total_actes|format_number }}</div>
-            <div class="metric-label">Total actes</div>
+            <div class="metric-value">{{ metrics.total_pec|format_number }}</div>
+            <div class="metric-label">Total PEC</div>
         </div>
         <div class="metric-card">
             <div class="metric-value">{{ metrics.montant_total|format_currency }}</div>
@@ -47,7 +47,7 @@
         </div>
         <div class="metric-card">
             <div class="metric-value">{{ metrics.montant_moyen|format_currency }}</div>
-            <div class="metric-label">Montant moyen</div>
+            <div class="metric-label">Montant moyen par PEC</div>
         </div>
     </div>
 
@@ -59,12 +59,15 @@
             </a>
         </div>
         <div class="actions-right">
-            <span class="export-label">Exporter:</span>
+            <span class="export-label">Télécharger:</span>
+            <a href="{{ url_for('exports.export_scenario1', format='xlsx') }}" class="btn btn-sm btn-success">
+                📗 Excel (.xlsx)
+            </a>
+            <a href="{{ url_for('exports.export_scenario1', format='word') }}" class="btn btn-sm btn-success">
+                📘 Word (.docx)
+            </a>
             <a href="{{ url_for('exports.export_scenario1', format='csv') }}" class="btn btn-sm btn-success">
                 📄 CSV
-            </a>
-            <a href="{{ url_for('exports.export_scenario1', format='xlsx') }}" class="btn btn-sm btn-success">
-                📊 XLSX
             </a>
             <a href="{{ url_for('exports.export_scenario1', format='pdf') }}" class="btn btn-sm btn-success">
                 📕 PDF
@@ -82,37 +85,64 @@
 
     <!-- Tableau des résultats -->
     {% if results %}
-    <div class="table-container">
-        <table class="table table-striped">
+    <div class="table-container" style="overflow-x: auto;">
+        <table class="table table-striped table-hover" style="font-size: 0.85rem;">
             <thead>
                 <tr>
-                    {% if filters.group_by_structure %}
-                    <th>Structure exécutante</th>
-                    {% endif %}
-                    {% if filters.group_by_pec %}
                     <th>Numéro PEC</th>
-                    {% endif %}
-                    {% if filters.group_by_date %}
-                    <th>Date d'exécution</th>
-                    {% endif %}
-                    <th class="text-right">Nombre d'actes</th>
-                    <th class="text-right">Montant total</th>
+                    <th class="text-right">Montant Total</th>
+                    <th>Type Prestation</th>
+                    <th>État Qualificatif</th>
+                    <th>Structure Initiatrice</th>
+                    <th>Structure Proposée</th>
+                    <th>Structure Exécutante</th>
+                    <th>PS Initiateur</th>
+                    <th>Tel Initiateur</th>
+                    <th>PS Exécutant</th>
+                    <th>Tel Exécutant</th>
+                    <th>Date Demande</th>
+                    <th>Date Début Exec</th>
+                    <th>Date Fin Exec</th>
+                    <th>Clé Validation</th>
+                    <th>Num Bénéficiaire</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Date Naissance</th>
+                    <th>Téléphone</th>
+                    <th>Sexe</th>
+                    <th>Facture</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in results %}
                 <tr>
-                    {% if filters.group_by_structure %}
-                    <td>{{ row.nom_structure or 'N/A' }}</td>
-                    {% endif %}
-                    {% if filters.group_by_pec %}
-                    <td>{{ row.num_pec or 'N/A' }}</td>
-                    {% endif %}
-                    {% if filters.group_by_date %}
-                    <td>{{ row.date_execution|format_date }}</td>
-                    {% endif %}
-                    <td class="text-right">{{ row.nb_actes|format_number }}</td>
-                    <td class="text-right font-weight-bold">{{ row.montant_total|format_currency }}</td>
+                    <td><strong>{{ row.num_pec }}</strong></td>
+                    <td class="text-right font-weight-bold">{{ row.montant_total_pec|format_currency }}</td>
+                    <td>{{ row.LIBELLE_TYPE_PRESTATION or 'N/A' }}</td>
+                    <td>{{ row.libelle_etat_qualificatif or 'N/A' }}</td>
+                    <td>{{ row.structure_initiatrice or 'N/A' }}</td>
+                    <td>{{ row.structure_propose or 'N/A' }}</td>
+                    <td>{{ row.structure_executante or 'N/A' }}</td>
+                    <td>{{ row.ps_initiateur or 'N/A' }}</td>
+                    <td>{{ row.tel_initiateur or '' }}</td>
+                    <td>{{ row.ps_executant or 'N/A' }}</td>
+                    <td>{{ row.tel_executant or '' }}</td>
+                    <td>{{ row.date_dmd_acte_trans|format_datetime if row.date_dmd_acte_trans else 'N/A' }}</td>
+                    <td>{{ row.date_debut_execution|format_datetime if row.date_debut_execution else 'N/A' }}</td>
+                    <td>{{ row.date_fin_execution|format_datetime if row.date_fin_execution else 'N/A' }}</td>
+                    <td>{{ row.cle_validation or '' }}</td>
+                    <td>{{ row.num_bnf or 'N/A' }}</td>
+                    <td>{{ row.nom_beneficiaire or '' }}</td>
+                    <td>{{ row.prenom_beneficiaire or '' }}</td>
+                    <td>{{ row.date_naissance|format_date if row.date_naissance else 'N/A' }}</td>
+                    <td>{{ row.telephone or '' }}</td>
+                    <td>{{ row.sexe or '' }}</td>
+                    <td>
+                        <a href="{{ url_for('scenario2.facture', num_pec=row.num_pec) }}" class="btn btn-sm btn-info"
+                           title="Voir la facture" target="_blank">
+                            🧾 Facture
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -160,5 +190,122 @@
             </button>
         </form>
     </div>
+
+    <!-- Modal pour les détails de la facture -->
+    <div id="factureModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="closeFactureModal()">&times;</span>
+            <h2>Détails de la facture</h2>
+            <div id="factureDetails">
+                <p>Chargement...</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function showFactureDetails(numPec) {
+    // Afficher le modal
+    document.getElementById('factureModal').style.display = 'block';
+
+    // Charger les détails via AJAX
+    fetch(`/api/facture-details/${numPec}`)
+        .then(response => response.json())
+        .then(data => {
+            let html = '<h3>PEC: ' + numPec + '</h3>';
+
+            if (data.error) {
+                html += '<p class="error">' + data.error + '</p>';
+            } else {
+                html += '<div class="metrics-cards">';
+                html += '<div class="metric-card">';
+                html += '<div class="metric-value">' + data.nb_lignes + '</div>';
+                html += '<div class="metric-label">Nombre de lignes</div>';
+                html += '</div>';
+                html += '<div class="metric-card">';
+                html += '<div class="metric-value">' + new Intl.NumberFormat('fr-FR').format(data.montant_total) + ' FCFA</div>';
+                html += '<div class="metric-label">Montant total</div>';
+                html += '</div>';
+                html += '</div>';
+
+                html += '<h4>Détail des actes</h4>';
+                html += '<table class="table table-striped">';
+                html += '<thead><tr>';
+                html += '<th>Structure</th><th>Libellé Acte</th><th>Date Exécution</th><th>Quantité</th><th>Montant</th><th>Total</th>';
+                html += '</tr></thead><tbody>';
+
+                data.lignes.forEach(ligne => {
+                    html += '<tr>';
+                    html += '<td>' + (ligne.nom_structure || 'N/A') + '</td>';
+                    html += '<td>' + (ligne.libelle_acte || 'N/A') + '</td>';
+                    html += '<td>' + (ligne.date_execution ? new Date(ligne.date_execution).toLocaleDateString('fr-FR') : 'N/A') + '</td>';
+                    html += '<td class="text-right">' + (ligne.nb || 1) + '</td>';
+                    html += '<td class="text-right">' + new Intl.NumberFormat('fr-FR').format(ligne.montant || 0) + '</td>';
+                    html += '<td class="text-right"><strong>' + new Intl.NumberFormat('fr-FR').format((ligne.montant || 0) * (ligne.nb || 1)) + '</strong></td>';
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+            }
+
+            document.getElementById('factureDetails').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('factureDetails').innerHTML = '<p class="error">Erreur lors du chargement des détails</p>';
+            console.error('Error:', error);
+        });
+}
+
+function closeFactureModal() {
+    document.getElementById('factureModal').style.display = 'none';
+}
+
+// Fermer le modal si on clique en dehors
+window.onclick = function(event) {
+    const modal = document.getElementById('factureModal');
+    if (event.target == modal) {
+        closeFactureModal();
+    }
+}
+</script>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+</style>
 {% endblock %}

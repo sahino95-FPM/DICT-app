@@ -13,6 +13,11 @@ cryptography>=41.0.0  # Requis pour MySQL 8+ avec caching_sha2_password
 Flask-WTF==1.2.1
 python-dotenv==1.0.0
 
+# WebSocket pour temps réel
+Flask-SocketIO==5.3.6
+python-socketio==5.11.0
+eventlet==0.33.3
+
 # Export de données
 openpyxl==3.1.2
 reportlab==4.0.7
@@ -20,6 +25,10 @@ python-docx==1.1.0  # Export Word (DOCX) pour Scénario 2
 
 # Logs et monitoring
 python-dateutil==2.8.2
+
+# Streamlit Application - États Synthétiques PEC
+streamlit>=1.30.0
+pandas>=2.0.0
 
 # Développement (optionnel)
 # flask-debugtoolbar==0.14.1

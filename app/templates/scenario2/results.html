@@ -24,7 +24,7 @@
             <strong>Numéro PEC:</strong> <span class="num-pec-highlight">{{ filters.num_pec }}</span>
         </div>
         <div class="context-item">
-            <strong>Sources:</strong> ACTE, RUB
+            <strong>Sources:</strong> ACTE, HOSPI
         </div>
         <div class="context-item">
             <strong>Résultats:</strong> {{ pagination.total_count|format_number }}
@@ -127,7 +127,7 @@
                 <tr>
                     <td>{{ row.nom_structure or 'N/A' }}</td>
                     <td class="font-weight-bold">{{ row.num_pec or 'N/A' }}</td>
-                    <td>{{ row.premiere_date_execution|format_date }}</td>
+                    <td>{{ row.premiere_date_execution|format_date('%d-%m-%Y %H:%M:%S') }}</td>
                     <td>{{ row.libelle_acte or 'N/A' }}</td>
                     <td>
                         <span class="badge badge-{{ 'primary' if row.source_ligne == 'ACTE' else 'info' }}">
@@ -145,7 +145,7 @@
                     <td>{{ row.sexe or 'N/A' }}</td>
                     {% endif %}
                     {% if filters.show_date_naissance %}
-                    <td>{{ row.date_naissance|format_date if row.date_naissance else 'N/A' }}</td>
+                    <td>{{ row.date_naissance|format_date('%d-%m-%Y %H:%M:%S') if row.date_naissance else 'N/A' }}</td>
                     {% endif %}
                     {% if filters.show_type_trans %}
                     <td>{{ row.libelle_type_trans or 'N/A' }}</td>

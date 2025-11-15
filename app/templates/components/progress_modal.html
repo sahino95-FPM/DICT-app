@@ -1,0 +1,264 @@
+<!-- Modal de progression avec animation -->
+<div id="progressModal" class="progress-modal-overlay" style="display: none;">
+    <div class="progress-modal-dialog">
+        <div class="progress-modal-content">
+            <div class="progress-modal-header">
+                <h5 class="progress-modal-title">
+                    <span class="spinner"></span>
+                    <span id="progressTitle">Traitement en cours...</span>
+                </h5>
+            </div>
+            <div class="progress-modal-body">
+                <div class="progress-info">
+                    <span id="progressMessage">Initialisation...</span>
+                    <strong id="progressPercent">0%</strong>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <div id="progressDetails" class="progress-details"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .progress-modal-dialog {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        max-width: 500px;
+        width: 90%;
+    }
+
+    .progress-modal-header {
+        background: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .progress-modal-title {
+        margin: 0;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .progress-modal-body {
+        padding: 20px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+
+    .progress-info #progressMessage {
+        color: #6c757d;
+    }
+
+    .progress-info #progressPercent {
+        color: #28a745;
+        font-size: 1.1rem;
+    }
+
+    .progress-bar-container {
+        height: 25px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.3s ease;
+        background-size: 40px 40px;
+        animation: progress-stripes 1s linear infinite;
+    }
+
+    @keyframes progress-stripes {
+        0% { background-position: 0 0; }
+        100% { background-position: 40px 0; }
+    }
+
+    .progress-details {
+        margin-top: 15px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+</style>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    // Configuration de Socket.IO
+    const socket = io({
+        transports: ['websocket', 'polling']
+    });
+
+    let currentTaskId = null;
+    let progressTimeout = null;
+    const progressModal = document.getElementById('progressModal');
+
+    // Connexion établie
+    socket.on('connect', function() {
+        console.log('Connecté au serveur WebSocket');
+    });
+
+    // Réception des mises à jour de progression
+    socket.on('progress_update', function(data) {
+        // Annuler le timeout auto-fermeture si une mise à jour est reçue
+        if (progressTimeout) {
+            clearTimeout(progressTimeout);
+            progressTimeout = null;
+        }
+        console.log('Mise à jour de progression:', data);
+        updateProgressBar(data.progress, data.message, data.status);
+    });
+
+    /**
+     * Affiche la modal de progression
+     */
+    function showProgressModal(taskId, title = 'Traitement en cours...') {
+        currentTaskId = taskId;
+
+        // Réinitialiser la modal
+        document.getElementById('progressTitle').textContent = title;
+        document.getElementById('progressPercent').textContent = '0%';
+        document.getElementById('progressMessage').textContent = 'Initialisation...';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressDetails').innerHTML = '';
+
+        // Rejoindre la room de la tâche
+        socket.emit('join_task', { task_id: taskId });
+
+        // Afficher la modal
+        progressModal.style.display = 'flex';
+    }
+
+    /**
+     * Met à jour la barre de progression
+     */
+    function updateProgressBar(progress, message, status) {
+        const percent = Math.round(progress);
+
+        // Mise à jour du pourcentage
+        document.getElementById('progressPercent').textContent = percent + '%';
+        document.getElementById('progressBar').style.width = percent + '%';
+
+        // Mise à jour du message
+        if (message) {
+            document.getElementById('progressMessage').textContent = message;
+
+            // Ajouter aux détails
+            const timestamp = new Date().toLocaleTimeString();
+            const detailDiv = document.createElement('div');
+            detailDiv.style.marginBottom = '5px';
+            detailDiv.innerHTML = `<span style="color: #6c757d;">[${timestamp}]</span> ${message}`;
+            document.getElementById('progressDetails').appendChild(detailDiv);
+
+            // Auto-scroll vers le bas
+            const details = document.getElementById('progressDetails');
+            if (details) {
+                details.scrollTop = details.scrollHeight;
+            }
+        }
+
+        // Gestion du statut
+        if (status === 'completed') {
+            document.getElementById('progressTitle').innerHTML = '✓ Traitement terminé !';
+
+            // Quitter la room
+            if (currentTaskId) {
+                socket.emit('leave_task', { task_id: currentTaskId });
+            }
+
+            // Fermer automatiquement après 2 secondes
+            setTimeout(() => {
+                hideProgressModal();
+            }, 2000);
+
+        } else if (status === 'error') {
+            document.getElementById('progressTitle').innerHTML = '✗ Erreur rencontrée';
+
+            // Quitter la room
+            if (currentTaskId) {
+                socket.emit('leave_task', { task_id: currentTaskId });
+            }
+        }
+    }
+
+    /**
+     * Ferme la modal de progression
+     */
+    function hideProgressModal() {
+        if (currentTaskId) {
+            socket.emit('leave_task', { task_id: currentTaskId });
+            currentTaskId = null;
+        }
+        progressModal.style.display = 'none';
+    }
+
+    // Détection automatique : si la modal s'affiche sans être appelée via showProgressModal,
+    // on la ferme automatiquement après 1 seconde
+    // Cela arrive quand un formulaire est soumis sans WebSocket configuré
+    document.addEventListener('DOMContentLoaded', function() {
+        // Observer si la modal s'affiche
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = progressModal.style.display !== 'none' &&
+                                    progressModal.style.display !== '';
+
+                    // Si la modal devient visible sans taskId, la fermer après 1 seconde
+                    if (isVisible && !currentTaskId) {
+                        if (progressTimeout) {
+                            clearTimeout(progressTimeout);
+                        }
+                        progressTimeout = setTimeout(function() {
+                            console.log('Modal auto-fermée (pas de WebSocket configuré)');
+                            hideProgressModal();
+                        }, 1000);
+                    }
+                }
+            });
+        });
+
+        observer.observe(progressModal, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    });
+</script>

@@ -77,6 +77,19 @@ def export_scenario1(format):
                 logo_path=logo_path if os.path.exists(logo_path) else None
             )
 
+        elif format == 'word':
+            logo_path = os.path.join(current_app.static_folder, 'img', 'logo_fpm.png')
+
+            return ExportService.export_to_word(
+                data=export_data['data'],
+                columns=export_data['columns'],
+                column_labels=export_data['column_labels'],
+                title='Recherche des montants exécutés',
+                filename_prefix='scenario1_montants_executes',
+                metadata=metadata,
+                logo_path=logo_path if os.path.exists(logo_path) else None
+            )
+
         else:
             flash(f"Format d'export non supporté: {format}", 'error')
             return redirect(url_for('scenario1.results'))

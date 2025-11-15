@@ -10,11 +10,11 @@
     <div class="cards-grid">
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title">📊 Analyses récentes</h3>
+                <h3 class="card-title">📋 Nombre de PEC</h3>
             </div>
             <div class="card-body">
-                <p class="card-value">{{ stats.recent_analyses|length }}</p>
-                <p class="card-label">analyses effectuées</p>
+                <p class="card-value">{{ stats.pec_today|default(0) }}</p>
+                <p class="card-label">PEC ayant débuté leur exécution aujourd'hui</p>
             </div>
         </div>
 
@@ -23,7 +23,7 @@
                 <h3 class="card-title">🔍 Modèles</h3>
             </div>
             <div class="card-body">
-                <p class="card-value">4</p>
+                <p class="card-value">2</p>
                 <p class="card-label">modèles disponibles</p>
             </div>
         </div>
@@ -33,7 +33,7 @@
                 <h3 class="card-title">📥 Exports</h3>
             </div>
             <div class="card-body">
-                <p class="card-value">CSV, XLSX, PDF</p>
+                <p class="card-value">CSV, XLSX, WORD, PDF</p>
                 <p class="card-label">formats supportés</p>
             </div>
         </div>
@@ -98,7 +98,7 @@
             <a href="{{ url_for('scenario1.form') }}" class="card card-link">
                 <div class="card-body">
                     <h4>🔍 Modèle 1</h4>
-                    <p>Recherche des montants exécutés par structure, dossier et période</p>
+                    <p>Analyse actes exécutés (Nombre et Montant total)</p>
                 </div>
             </a>
 

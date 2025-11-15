@@ -4,7 +4,7 @@
             <li class="nav-item">
                 <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
                     <span class="icon">📊</span>
-                    <span>Dashboard</span>
+                    <span>Tableau de Bord</span>
                 </a>
             </li>
 
@@ -16,12 +16,12 @@
                 <ul class="nav-sublist">
                     <li>
                         <a href="{{ url_for('scenario1.form') }}" class="nav-sublink {% if 'scenario1' in request.endpoint %}active{% endif %}">
-                            Modèle 1: Montants exécutés
+                            Modèle 1: Analyse actes exécutés (Nombre et Montant total)
                         </a>
                     </li>
                     <li>
                         <a href="{{ url_for('scenario2.form') }}" class="nav-sublink {% if 'scenario2' in request.endpoint %}active{% endif %}">
-                            Modèle 2: Analyse consolidée
+                            Modèle 2: Analyse consolidée par Dossier PEC
                         </a>
                     </li>
                     <li class="nav-sublink disabled">

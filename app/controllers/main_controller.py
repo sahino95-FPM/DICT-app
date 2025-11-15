@@ -20,6 +20,12 @@ def dashboard():
         return render_template('dashboard.html', stats={'recent_analyses': []})
 
 
+@main_bp.route('/test-websocket')
+def test_websocket():
+    """Page de test WebSocket"""
+    return render_template('test_websocket.html')
+
+
 @main_bp.route('/scenarios')
 def scenarios_list():
     """Liste des scénarios disponibles"""
@@ -37,7 +43,7 @@ def scenarios_list():
         {
             'id': 2,
             'titre': 'Analyse consolidée par dossier',
-            'description': 'Montants exécutés par dossier (num_pec) et structure avec infos bénéficiaire, type transaction et source (ACTE/RUB).',
+            'description': 'Montants exécutés par dossier (num_pec) et structure avec infos bénéficiaire, type transaction et source (ACTE/HOSPI).',
             'route': 'scenario2.form',
             'active': True,
             'icon': 'chart'

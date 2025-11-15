@@ -236,7 +236,7 @@ class ExportService:
     @staticmethod
     def prepare_export_data(results, export_format='csv'):
         """
-        Prépare les données pour l'export
+        Prépare les données pour l'export du scénario 1 (modèle corrigé)
 
         Args:
             results: Résultats de l'analyse
@@ -248,20 +248,60 @@ class ExportService:
         if not results:
             return {'data': [], 'columns': [], 'column_labels': {}}
 
-        # Détection automatique des colonnes
-        columns = list(results[0].keys())
+        # Colonnes détaillées pour le modèle 1 corrigé (compatible avec admi_claude.py)
+        columns = [
+            'num_pec',
+            'montant_total_pec',
+            'LIBELLE_TYPE_PRESTATION',
+            'libelle_etat_qualificatif',
+            'structure_initiatrice',
+            'structure_propose',
+            'structure_executante',
+            'structure_origine_bulletin',
+            'ps_initiateur',
+            'tel_initiateur',
+            'ps_executant',
+            'tel_executant',
+            'date_dmd_acte_trans',
+            'date_debut_execution',
+            'date_fin_execution',
+            'date_accuser_reception',
+            'cle_validation',
+            'nombre_jour_hospitalisation',
+            'num_bnf',
+            'nom_beneficiaire',
+            'prenom_beneficiaire',
+            'date_naissance',
+            'telephone',
+            'sexe'
+        ]
 
-        # Labels des colonnes (à personnaliser selon le scénario)
+        # Labels des colonnes (français)
         column_labels = {
-            'structure_id': 'ID Structure',
-            'nom_structure': 'Structure exécutante',
             'num_pec': 'Numéro PEC',
-            'date_execution': 'Date d\'exécution',
-            'nb_actes': 'Nombre d\'actes',
-            'montant_total': 'Montant total (FCFA)',
-            'code_acte': 'Code acte',
-            'libelle_acte': 'Libellé acte',
-            'montant_execute': 'Montant exécuté (FCFA)'
+            'montant_total_pec': 'Montant Total (FCFA)',
+            'LIBELLE_TYPE_PRESTATION': 'Type Prestation',
+            'libelle_etat_qualificatif': 'État Qualificatif',
+            'structure_initiatrice': 'Structure Initiatrice',
+            'structure_propose': 'Structure Proposée',
+            'structure_executante': 'Structure Exécutante',
+            'structure_origine_bulletin': 'Structure Origine Bulletin',
+            'ps_initiateur': 'Personnel Initiateur',
+            'tel_initiateur': 'Tél. Initiateur',
+            'ps_executant': 'Personnel Exécutant',
+            'tel_executant': 'Tél. Exécutant',
+            'date_dmd_acte_trans': 'Date Demande Acte',
+            'date_debut_execution': 'Date Début Exécution',
+            'date_fin_execution': 'Date Fin Exécution',
+            'date_accuser_reception': 'Date Accusé Réception',
+            'cle_validation': 'Clé Validation',
+            'nombre_jour_hospitalisation': 'Nb Jours Hospitalisation',
+            'num_bnf': 'Num. Bénéficiaire',
+            'nom_beneficiaire': 'Nom Bénéficiaire',
+            'prenom_beneficiaire': 'Prénom Bénéficiaire',
+            'date_naissance': 'Date Naissance',
+            'telephone': 'Téléphone',
+            'sexe': 'Sexe'
         }
 
         return {
@@ -426,9 +466,19 @@ class ExportService:
                     run.font.size = Pt(10)
                     run.font.color.rgb = RGBColor(255, 255, 255)
             # Couleur de fond (via shading)
-            shading_elm = cell._element.get_or_add_tcPr().get_or_add_shd()
-            shading_elm.set('{http://www.w3.org/TR/REC-html40}color', 'auto')
-            shading_elm.set('{http://www.w3.org/TR/REC-html40}fill', '006b01')
+            try:
+                from docx.oxml.shared import OxmlElement
+                from docx.oxml.ns import qn
+
+                tcPr = cell._element.get_or_add_tcPr()
+                shading_elm = OxmlElement('w:shd')
+                shading_elm.set(qn('w:fill'), '006b01')
+                shading_elm.set(qn('w:val'), 'clear')
+                shading_elm.set(qn('w:color'), 'auto')
+                tcPr.append(shading_elm)
+            except Exception as e:
+                # Si le shading échoue, on continue sans couleur de fond
+                pass
 
         # Données du tableau
         for row_data in limited_data:

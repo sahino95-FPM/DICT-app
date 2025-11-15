@@ -9,7 +9,10 @@ class AnalyticsService:
     @staticmethod
     def analyze_scenario1(filters, pagination=None):
         """
-        Analyse du scénario 1: Montants exécutés par structure/dossier/période
+        Analyse du scénario 1: Montants exécutés - Vue détaillée par PEC
+
+        MODÈLE CORRIGÉ: Affiche maintenant les données détaillées par PEC avec toutes les colonnes
+        du fichier Excel (compatible avec admi_claude.py)
 
         Args:
             filters: Dict contenant les filtres de recherche
@@ -23,45 +26,35 @@ class AnalyticsService:
         date_fin = filters.get('date_fin')
         montant_min = filters.get('montant_min')
         montant_max = filters.get('montant_max')
-        group_by_structure = filters.get('group_by_structure', True)
-        group_by_pec = filters.get('group_by_pec', True)
-        group_by_date = filters.get('group_by_date', True)
-        show_details = filters.get('show_details', False)
 
         # Pagination
         page = pagination.get('page', 1) if pagination else 1
         per_page = pagination.get('per_page', 50) if pagination else 50
         offset = (page - 1) * per_page
 
-        # Récupération des données agrégées
-        results = ActeModel.get_aggregated_data(
+        # Récupération des données détaillées par PEC (NOUVEAU)
+        results = ActeModel.get_detailed_pec_data(
             date_debut=date_debut,
             date_fin=date_fin,
             montant_min=montant_min,
             montant_max=montant_max,
-            group_by_structure=group_by_structure,
-            group_by_pec=group_by_pec,
-            group_by_date=group_by_date,
             limit=per_page,
             offset=offset
         )
 
         # Compte total pour pagination
-        total_count = ActeModel.count_actes_by_filters(
+        total_count = ActeModel.count_detailed_pec(
             date_debut=date_debut,
             date_fin=date_fin,
             montant_min=montant_min,
-            montant_max=montant_max,
-            group_by_structure=group_by_structure,
-            group_by_pec=group_by_pec,
-            group_by_date=group_by_date
+            montant_max=montant_max
         )
 
         # Calcul des métriques globales
-        metrics = AnalyticsService._calculate_metrics(results)
+        metrics = AnalyticsService._calculate_metrics_detailed(results)
 
         # Construction de la requête SQL (pour affichage si demandé)
-        sql_query = AnalyticsService._build_sql_query(filters) if filters.get('show_sql') else None
+        sql_query = None  # Désactivé pour le moment
 
         return {
             'results': results,
@@ -74,8 +67,28 @@ class AnalyticsService:
         }
 
     @staticmethod
+    def _calculate_metrics_detailed(results):
+        """Calcule les métriques globales pour les données détaillées par PEC"""
+        if not results:
+            return {
+                'total_pec': 0,
+                'montant_total': 0,
+                'montant_moyen': 0
+            }
+
+        total_pec = len(results)
+        montant_total = sum(r.get('montant_total_pec', 0) or 0 for r in results)
+        montant_moyen = montant_total / total_pec if total_pec > 0 else 0
+
+        return {
+            'total_pec': total_pec,
+            'montant_total': montant_total,
+            'montant_moyen': montant_moyen
+        }
+
+    @staticmethod
     def _calculate_metrics(results):
-        """Calcule les métriques globales à partir des résultats"""
+        """Calcule les métriques globales à partir des résultats (ancienne méthode)"""
         if not results:
             return {
                 'total_actes': 0,
@@ -170,9 +183,22 @@ WHERE a.date_execution BETWEEN '{filters.get('date_debut')}' AND '{filters.get('
     @staticmethod
     def get_dashboard_stats():
         """Récupère les statistiques pour le dashboard"""
-        recent_analyses = AnalysisLogModel.get_recent_logs(limit=5)
+        from app.models.scenario2 import Scenario2Model
+
+        # Récupérer les analyses récentes (avec gestion d'erreur)
+        try:
+            recent_analyses = AnalysisLogModel.get_recent_logs(limit=5)
+        except Exception as e:
+            recent_analyses = []
+
+        # Compter les PEC du jour
+        try:
+            pec_today = Scenario2Model.count_pec_today()
+        except Exception as e:
+            pec_today = 0
 
         return {
             'recent_analyses': recent_analyses,
-            'total_analyses': len(recent_analyses)
+            'total_analyses': len(recent_analyses),
+            'pec_today': pec_today
         }

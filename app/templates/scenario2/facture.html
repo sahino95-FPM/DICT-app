@@ -10,9 +10,7 @@
     <span class="separator">›</span>
     <a href="{{ url_for('scenario2.form') }}">Modèle 2</a>
     <span class="separator">›</span>
-    <a href="{{ url_for('scenario2.results') }}">Résultats</a>
-    <span class="separator">›</span>
-    <span class="current">Facture</span>
+    <span class="current">Facture - {{ num_pec }}</span>
 </nav>
 {% endblock %}
 
@@ -42,8 +40,8 @@
 
     <!-- Actions -->
     <div class="action-buttons">
-        <a href="{{ url_for('scenario2.results') }}" class="btn btn-secondary">
-            ← Retour aux résultats
+        <a href="{{ url_for('scenario2.form') }}" class="btn btn-secondary">
+            ← Nouvelle recherche
         </a>
         <button onclick="window.print()" class="btn btn-primary">
             🖨️ Imprimer
@@ -69,19 +67,21 @@
                 <tr>
                     <td>
                         <span class="badge badge-{{ 'primary' if detail.source_ligne == 'ACTE' else 'info' }}">
-                            {{ detail.source_ligne }}
+                            {{ 'HOSPI' if detail.source_ligne == 'RUB' else detail.source_ligne }}
                         </span>
                     </td>
                     <td>{{ detail.libelle_acte or 'N/A' }}</td>
-                    <td class="text-center">{{ detail.nb }}</td>
+                    <td class="text-center">{{ detail.nb or 0 }}</td>
                     <td class="text-right">
-                        {% if detail.nb and detail.nb > 0 %}
+                        {% if detail.montant and detail.nb and detail.nb > 0 %}
                         {{ (detail.montant / detail.nb)|round(2)|format_currency }}
-                        {% else %}
+                        {% elif detail.montant %}
                         {{ detail.montant|format_currency }}
+                        {% else %}
+                        0,00 FCFA
                         {% endif %}
                     </td>
-                    <td class="text-right font-weight-bold">{{ detail.montant|format_currency }}</td>
+                    <td class="text-right font-weight-bold">{{ detail.montant|format_currency if detail.montant else '0,00 FCFA' }}</td>
                     <td class="text-center">{{ detail.premiere_date_execution|format_date }}</td>
                     <td class="text-center">{{ detail.derniere_date_execution|format_date }}</td>
                 </tr>

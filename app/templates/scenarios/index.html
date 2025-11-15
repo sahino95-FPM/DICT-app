@@ -4,7 +4,7 @@
 
 {% block breadcrumb %}
 <nav class="breadcrumb">
-    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('main.dashboard') }}">Tableau de Bord</a>
     <span class="separator">›</span>
     <span class="current">Modèles</span>
 </nav>
@@ -20,7 +20,7 @@
     <div class="scenarios-grid">
         {% for scenario in scenarios %}
         <div class="scenario-card {% if not scenario.active %}disabled{% endif %}">
-            <div class="scenario-icon">{{ scenario.icon if scenario.icon in ['search', 'chart', 'table', 'stats'] else '📊' }}</div>
+            <div class="scenario-icon">{{ scenario.icon if scenario.icon in ['Analyse', 'argent', 'table', 'stats'] else '📊' }}</div>
             <div class="scenario-content">
                 <h3 class="scenario-title">
                     Modèle {{ scenario.id }}

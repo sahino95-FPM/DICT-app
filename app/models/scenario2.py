@@ -107,7 +107,7 @@ class Scenario2Model:
                     lrh.date_execution_acte                 AS date_execution,
                     lrh.montant                             AS montant,
                     lrh.qte                                 AS nb_orig,
-                    'RUB'                                   AS source_ligne
+                    'HOSPI'                                 AS source_ligne
                 FROM acte_trans at
                 JOIN list_rub_hosp_acte_trans lrh
                     ON lrh.id_acte_trans = at.id_acte_trans
@@ -184,7 +184,7 @@ class Scenario2Model:
         where_clause = " WHERE " + " AND ".join(where_conditions) if where_conditions else ""
 
         # Construction CTE pour total cumulé par PEC SANS filtres de dates/montants
-        # IMPORTANT: On inclut TOUJOURS ACTE + RUB pour le total, indépendamment des filtres
+        # IMPORTANT: On inclut TOUJOURS ACTE + HOSPI pour le total, indépendamment des filtres
         # Mais on filtre par num_pec si fourni pour éviter de calculer tous les dossiers
         where_total_pec = ""
         if num_pec:
@@ -193,7 +193,7 @@ class Scenario2Model:
         lignes_total_cte = f"""
             SELECT
                 at.num_pec,
-                lrh.montant * lrh.qte AS montant_total
+                lrh.montant * COALESCE(lrh.qte, 1) AS montant_total
             FROM acte_trans at
             JOIN list_rub_hosp_acte_trans lrh ON lrh.id_acte_trans = at.id_acte_trans
             {where_total_pec}
@@ -202,7 +202,7 @@ class Scenario2Model:
 
             SELECT
                 at.num_pec,
-                laa.montant_acte * laa.quantite AS montant_total
+                laa.montant_acte * COALESCE(laa.quantite, 1) AS montant_total
             FROM acte_trans at
             JOIN list_acte_acte_trans laa ON laa.id_acte_trans = at.id_acte_trans
             {where_total_pec}
@@ -234,10 +234,12 @@ class Scenario2Model:
                 li.libelle_acte,
 
                 /* nb = somme des quantités pour ce couple (libellé, montant_unitaire) */
-                SUM(li.nb_orig) AS nb_lignes,
+                /* Si nb_orig est NULL, on considère 1 comme quantité par défaut */
+                COALESCE(SUM(COALESCE(li.nb_orig, 1)), 0) AS nb_lignes,
 
                 /* montant groupé = somme des (montant_unitaire * qte) */
-                COALESCE(SUM(li.montant * li.nb_orig), 0) AS montant_execute_total,
+                /* Si nb_orig est NULL, on utilise juste le montant (qte implicite = 1) */
+                COALESCE(SUM(li.montant * COALESCE(li.nb_orig, 1)), 0) AS montant_execute_total,
 
                 MIN(li.date_execution) AS premiere_date_execution,
                 MAX(li.date_execution) AS derniere_date_execution,
@@ -323,7 +325,7 @@ class Scenario2Model:
                     lrh.date_execution_acte                 AS date_execution,
                     lrh.montant                             AS montant,
                     lrh.qte                                 AS nb_orig,
-                    'RUB'                                   AS source_ligne
+                    'HOSPI'                                 AS source_ligne
                 FROM acte_trans at
                 JOIN list_rub_hosp_acte_trans lrh
                     ON lrh.id_acte_trans = at.id_acte_trans
@@ -463,6 +465,8 @@ class Scenario2Model:
         Récupère les détails groupés par (libelle_acte, montant) pour un num_pec donné
         Retourne le regroupement des actes/rubriques avec nb de lignes, montant cumulé et dates
         Inclut aussi le nom et prénom du bénéficiaire
+
+        Utilise une recherche EXACTE sur le num_pec complet (incluant le slash)
         """
         query = """
         WITH lignes AS (
@@ -486,10 +490,11 @@ class Scenario2Model:
             ON s.id_structure = at.id_structure_executante
           LEFT JOIN acte a
             ON a.id_acte = laa.id_acte
+          WHERE at.num_pec = :num_pec
 
           UNION ALL
 
-          /* (B) RUB */
+          /* (B) HOSPI */
           SELECT
               at.num_pec,
               at.id_structure_executante                  AS id_structure,
@@ -501,7 +506,7 @@ class Scenario2Model:
               lrh.date_execution_acte                     AS date_execution,
               lrh.montant                                 AS montant,
               lrh.qte                                     AS nb_orig,
-              'RUB'                                       AS source_ligne
+              'HOSPI'                                     AS source_ligne
           FROM acte_trans at
           JOIN list_rub_hosp_acte_trans lrh
             ON lrh.id_acte_trans = at.id_acte_trans
@@ -511,6 +516,7 @@ class Scenario2Model:
             ON a2.id_acte = lrh.id_acte
           LEFT JOIN rubrique_hospitalisations rh
             ON rh.id = lrh.id_rub_hospit
+          WHERE at.num_pec = :num_pec
         ),
         beneficiaire_info AS (
           /* Récupérer les infos du bénéficiaire */
@@ -532,10 +538,12 @@ class Scenario2Model:
           li.libelle_acte,
 
           /* nb = somme des quantités (nb_orig) pour ce couple (libellé, montant_unitaire) */
-          SUM(li.nb_orig) AS nb,
+          /* Si nb_orig est NULL, on considère 1 comme quantité par défaut */
+          COALESCE(SUM(COALESCE(li.nb_orig, 1)), 0) AS nb,
 
           /* montant groupé = somme des (montant_unitaire * qte) */
-          SUM(li.montant * li.nb_orig) AS montant,
+          /* Si nb_orig est NULL, on utilise juste le montant (qte implicite = 1) */
+          COALESCE(SUM(li.montant * COALESCE(li.nb_orig, 1)), 0) AS montant,
 
           /* repères temporels utiles */
           MIN(li.date_execution) AS premiere_date_execution,
@@ -547,7 +555,6 @@ class Scenario2Model:
 
         FROM lignes li
         LEFT JOIN beneficiaire_info bi ON bi.num_pec = li.num_pec
-        WHERE li.num_pec = :num_pec
         GROUP BY
           li.num_pec,
           li.id_structure,
@@ -562,3 +569,20 @@ class Scenario2Model:
         """
 
         return Scenario2Model.execute_query(query, {'num_pec': num_pec})
+
+    @staticmethod
+    def count_pec_today():
+        """
+        Compte le nombre de PEC distincts avec date de début d'exécution aujourd'hui
+
+        Returns:
+            int: Nombre de PEC du jour
+        """
+        query = """
+        SELECT COUNT(DISTINCT num_pec) as count_pec
+        FROM acte_trans
+        WHERE DATE(date_debut_execution) = CURDATE()
+        """
+
+        result = Scenario2Model.execute_query(query, {})
+        return result[0]['count_pec'] if result else 0

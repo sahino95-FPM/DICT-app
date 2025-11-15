@@ -2,6 +2,7 @@
 import logging
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
+from flask_socketio import SocketIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from app.config import config
@@ -9,6 +10,7 @@ from app.config import config
 
 # Instances globales
 csrf = CSRFProtect()
+socketio = SocketIO()
 db_engine = None
 db_session = None
 mariadb_engine = None
@@ -24,6 +26,9 @@ def create_app(config_name='default'):
 
     # Initialisation CSRF
     csrf.init_app(app)
+
+    # Initialisation SocketIO (sans spécifier async_mode, Flask-SocketIO le détectera automatiquement)
+    socketio.init_app(app, cors_allowed_origins="*")
 
     # Configuration des logs
     configure_logging(app)
@@ -154,6 +159,21 @@ def register_template_filters(app):
         if isinstance(value, str):
             return value
         return value.strftime(format)
+
+    @app.template_filter('format_datetime')
+    def format_datetime(value):
+        """Formate une date avec heure au format JJ-MM-AAAA HH:MM:SS"""
+        if value is None:
+            return '-'
+        if isinstance(value, str):
+            # Si c'est déjà une chaîne, essayer de la parser
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return dt.strftime('%d-%m-%Y %H:%M:%S')
+            except:
+                return value
+        return value.strftime('%d-%m-%Y %H:%M:%S')
 
     @app.template_filter('format_number')
     def format_number(value):

@@ -14,7 +14,7 @@
 
 {% block content %}
 <div class="scenario-form-page">
-    <h2 class="page-title">Modèle 1: Recherche des montants exécutés</h2>
+    <h2 class="page-title">Modèle 1: Analyse actes exécutés (Nombre et Montant total)</h2>
     <p class="page-description">
         Obtenez la synthèse des actes exécutés (nombre et montant total) regroupés par structure,
         dossier et/ou date d'exécution avec filtres dynamiques et exports.
@@ -63,52 +63,11 @@
             </div>
         </div>
 
-        <!-- Regroupement -->
+        <!-- Limite de résultats -->
         <div class="form-section">
-            <h3 class="form-section-title">📊 Regrouper les résultats par</h3>
-            <p class="form-help">Sélectionnez au moins un critère de regroupement</p>
-
-            <div class="form-checkboxes">
-                <div class="form-checkbox">
-                    <input type="checkbox" id="group_by_structure" name="group_by_structure"
-                           {% if defaults.group_by_structure %}checked{% endif %}>
-                    <label for="group_by_structure">Structure exécutante</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="group_by_pec" name="group_by_pec"
-                           {% if defaults.group_by_pec %}checked{% endif %}>
-                    <label for="group_by_pec">Numéro de dossier (PEC)</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="group_by_date" name="group_by_date"
-                           {% if defaults.group_by_date %}checked{% endif %}>
-                    <label for="group_by_date">Date d'exécution</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Options avancées -->
-        <div class="form-section">
-            <h3 class="form-section-title">⚙️ Options avancées</h3>
-
-            <div class="form-checkboxes">
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_details" name="show_details"
-                           {% if defaults.show_details %}checked{% endif %}>
-                    <label for="show_details">🧮 Afficher le détail des actes</label>
-                </div>
-
-                <div class="form-checkbox">
-                    <input type="checkbox" id="show_sql" name="show_sql"
-                           {% if defaults.show_sql %}checked{% endif %}>
-                    <label for="show_sql">🧑‍💻 Afficher la requête SQL générée</label>
-                </div>
-            </div>
-
+            <h3 class="form-section-title">⚙️ Limite de résultats</h3>
             <div class="form-group">
-                <label for="limit">⏱️ Limiter le nombre de résultats</label>
+                <label for="limit">Nombre maximum de résultats à afficher</label>
                 <input type="number" id="limit" name="limit" class="form-control"
                        value="{{ defaults.limit }}" min="50" max="5000" step="50">
                 <span class="form-help-inline">Entre 50 et 5000 résultats</span>

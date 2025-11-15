@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WebSocket</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Test WebSocket Connection</h1>
+    <div id="status">Status: Not connected</div>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="testProgress()">Test Progress</button>
+    <div id="messages"></div>
+
+    <script>
+        const socket = io({
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket!');
+            document.getElementById('status').innerHTML = 'Status: <span style="color: green;">Connected</span>';
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from WebSocket');
+            document.getElementById('status').innerHTML = 'Status: <span style="color: red;">Disconnected</span>';
+        });
+
+        socket.on('progress_update', function(data) {
+            console.log('Progress update:', data);
+            const msg = document.createElement('div');
+            msg.textContent = `[${new Date().toLocaleTimeString()}] ${data.progress}% - ${data.message}`;
+            document.getElementById('messages').appendChild(msg);
+        });
+
+        function testConnection() {
+            socket.emit('test', {message: 'Hello from client'});
+            console.log('Test message sent');
+        }
+
+        function testProgress() {
+            const taskId = 'test-' + Date.now();
+            socket.emit('join_task', {task_id: taskId});
+
+            // Simuler des mises à jour de progression
+            setTimeout(() => socket.emit('test_progress', {task_id: taskId, progress: 25}), 1000);
+            setTimeout(() => socket.emit('test_progress', {task_id: taskId, progress: 50}), 2000);
+            setTimeout(() => socket.emit('test_progress', {task_id: taskId, progress: 75}), 3000);
+            setTimeout(() => socket.emit('test_progress', {task_id: taskId, progress: 100}), 4000);
+        }
+    </script>
+</body>
+</html>

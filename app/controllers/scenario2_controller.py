@@ -54,9 +54,9 @@ def form():
     return render_template('scenario2/form.html', defaults=defaults, structures=structures)
 
 
-@scenario2_bp.route('/results', methods=['POST'])
+@scenario2_bp.route('/results', methods=['GET', 'POST'])
 def results():
-    """Traite le formulaire et affiche les résultats"""
+    """Traite le formulaire et redirige directement vers la facture"""
     try:
         # Récupération des filtres
         filters = _extract_filters_from_request()
@@ -68,44 +68,19 @@ def results():
                 flash(error, 'error')
             return redirect(url_for('scenario2.form'))
 
-        # Sauvegarde des filtres dans la session
-        session['scenario2_filters'] = filters
+        # Récupérer le num_pec
+        num_pec = filters.get('num_pec')
 
-        # Pagination
-        page = request.args.get('page', 1, type=int)
-        per_page = min(filters.get('limit', 50), 5000)
+        if not num_pec:
+            flash("Le numéro de dossier (PEC) est requis", 'error')
+            return redirect(url_for('scenario2.form'))
 
-        pagination = {
-            'page': page,
-            'per_page': per_page
-        }
-
-        # Exécution de l'analyse
-        analysis = Scenario2Service.analyze_scenario2(filters, pagination)
-
-        # Masquage des téléphones si demandé
-        if filters.get('mask_phone'):
-            for result in analysis['results']:
-                if result.get('telephone'):
-                    result['telephone'] = Scenario2Service.mask_phone_number(result['telephone'])
-
-        return render_template(
-            'scenario2/results.html',
-            results=analysis['results'],
-            filters=filters,
-            pagination={
-                'page': analysis['page'],
-                'per_page': analysis['per_page'],
-                'total_pages': analysis['total_pages'],
-                'total_count': analysis['total_count']
-            },
-            metrics=analysis['metrics'],
-            sql_query=analysis.get('sql_query')
-        )
+        # Redirection directe vers la facture avec le num_pec
+        return redirect(url_for('scenario2.facture', num_pec=num_pec))
 
     except Exception as e:
-        current_app.logger.error(f"Erreur lors de l'analyse: {e}")
-        flash(f"Erreur lors de l'analyse: {str(e)}", 'error')
+        current_app.logger.error(f"Erreur lors du traitement: {e}")
+        flash(f"Erreur lors du traitement: {str(e)}", 'error')
         return redirect(url_for('scenario2.form'))
 
 
@@ -143,10 +118,13 @@ def save_analysis():
     return redirect(url_for('scenario2.results'))
 
 
-@scenario2_bp.route('/facture/<path:num_pec>')
+@scenario2_bp.route('/facture/<path:num_pec>', methods=['GET'])
 def facture(num_pec):
     """Affiche la facture détaillée pour un num_pec donné"""
     try:
+        # Log du num_pec reçu pour debug
+        current_app.logger.info(f"Recherche facture pour num_pec: '{num_pec}'")
+
         # Récupérer les détails groupés de la facture
         details = Scenario2Model.get_facture_details(num_pec)
 
@@ -156,10 +134,18 @@ def facture(num_pec):
 
         if not details:
             flash(f"Aucune donnée trouvée pour le dossier {num_pec}", 'warning')
-            return redirect(url_for('scenario2.results'))
+            return redirect(url_for('main.scenarios_list'))
 
-        # Calculer le montant total cumulé
-        montant_total = sum(float(item['montant']) if item['montant'] is not None else 0 for item in details)
+        # Calculer le montant total cumulé (gérer les valeurs None)
+        montant_total = 0
+        for item in details:
+            montant = item.get('montant')
+            if montant is not None:
+                try:
+                    montant_total += float(montant)
+                except (ValueError, TypeError):
+                    current_app.logger.warning(f"Montant invalide ignoré: {montant}")
+                    pass
 
         # Récupérer les infos de base (premier élément)
         info_base = details[0] if details else {}
@@ -179,7 +165,7 @@ def facture(num_pec):
         import traceback
         current_app.logger.error(traceback.format_exc())
         flash(f"Erreur lors de la génération de la facture: {str(e)}", 'error')
-        return redirect(url_for('scenario2.results'))
+        return redirect(url_for('main.scenarios_list'))
 
 
 def _extract_filters_from_request():
@@ -199,7 +185,7 @@ def _extract_filters_from_request():
         # Montants: pas de filtre par défaut
         'montant_min': _parse_float(request.form.get('montant_min')),
         'montant_max': _parse_float(request.form.get('montant_max')),
-        # Sources: toujours inclure ACTE et RUB pour le total complet
+        # Sources: toujours inclure ACTE et HOSPI pour le total complet
         'include_acte': request.form.get('include_acte', 'on') == 'on',
         'include_rub': request.form.get('include_rub', 'on') == 'on',
         # Filtres de recherche
@@ -258,7 +244,7 @@ def _validate_filters(filters):
 
     # Au moins une source
     if not filters['include_acte'] and not filters['include_rub']:
-        errors.append("Vous devez sélectionner au moins une source (ACTE ou RUB)")
+        errors.append("Vous devez sélectionner au moins une source (ACTE ou HOSPI)")
 
     # Validation du numéro PEC (obligatoire pour le formulaire simplifié)
     if not filters.get('num_pec'):

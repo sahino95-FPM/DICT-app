@@ -18,14 +18,14 @@ class BaseModel:
         Returns:
             Liste de dictionnaires (résultats)
         """
-        from app import db_session
+        from app import mariadb_session
         try:
-            result = db_session.execute(text(query), params or {})
+            result = mariadb_session.execute(text(query), params or {})
             # Conversion en liste de dictionnaires
             columns = result.keys()
             return [dict(zip(columns, row)) for row in result.fetchall()]
         except Exception as e:
-            db_session.rollback()
+            mariadb_session.rollback()
             raise Exception(f"Erreur lors de l'exécution de la requête: {str(e)}")
 
     @staticmethod
@@ -40,27 +40,27 @@ class BaseModel:
         Returns:
             Valeur scalaire
         """
-        from app import db_session
+        from app import mariadb_session
         try:
-            result = db_session.execute(text(query), params or {})
+            result = mariadb_session.execute(text(query), params or {})
             row = result.fetchone()
             return row[0] if row else None
         except Exception as e:
-            db_session.rollback()
+            mariadb_session.rollback()
             raise Exception(f"Erreur lors de l'exécution de la requête: {str(e)}")
 
     @staticmethod
     def commit():
         """Valide la transaction en cours"""
-        from app import db_session
+        from app import mariadb_session
         try:
-            db_session.commit()
+            mariadb_session.commit()
         except Exception as e:
-            db_session.rollback()
+            mariadb_session.rollback()
             raise Exception(f"Erreur lors de la validation: {str(e)}")
 
     @staticmethod
     def rollback():
         """Annule la transaction en cours"""
-        from app import db_session
-        db_session.rollback()
+        from app import mariadb_session
+        mariadb_session.rollback()
